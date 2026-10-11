@@ -41,6 +41,41 @@ canvas{touch-action:none}
 #bj{right:0;bottom:0;width:84px;height:84px;font-size:15px}
 #bs{right:96px;bottom:4px;width:60px;height:60px}
 #be{right:6px;bottom:96px;width:72px;height:72px;display:none}
+/* ---- ganti musik ---- */
+#mus{position:fixed;left:calc(22px + env(safe-area-inset-left,0px));top:54px;display:flex;align-items:center;gap:4px;padding:3px;background:rgba(255,255,255,.2);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.55);border-radius:20px;font-size:13px;font-weight:700;text-shadow:0 1px 6px rgba(10,40,100,.8)}
+#mus button{width:30px;height:30px;margin:0;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.25);color:#fff;font-family:inherit;font-size:18px;font-weight:700;line-height:1;cursor:pointer;touch-action:manipulation}
+#mus button:hover{background:rgba(255,255,255,.45)}
+#mus button:active{background:rgba(255,255,255,.65)}
+#mn{width:128px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px}
+.touch #mus{top:calc(100px + env(safe-area-inset-top,0px))}
+/* ---- portal menara -> /nurture ---- */
+#portal{display:none;position:fixed;left:50%;bottom:88px;transform:translateX(-50%);padding:10px 26px;border-radius:30px;border:2px solid #fff;background:rgba(255,255,255,.28);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;font:700 16px 'Zen Maru Gothic',system-ui,sans-serif;letter-spacing:.04em;text-shadow:0 1px 8px rgba(10,40,100,.8);box-shadow:0 0 24px rgba(255,255,255,.55);cursor:pointer;touch-action:manipulation;animation:pg 1.8s ease-in-out infinite}
+#portal.show{display:block}
+#portal:hover{background:rgba(255,255,255,.5)}
+.touch #portal{bottom:auto;top:calc(150px + env(safe-area-inset-top,0px));padding:12px 28px}
+.touch .nt{display:none}
+@keyframes pg{50%{box-shadow:0 0 38px rgba(255,255,255,.95)}}
+#warp{position:fixed;inset:0;z-index:20;display:grid;place-items:center;text-align:center;opacity:0;pointer-events:none;transition:opacity 1s;background:url(/loading_nurture.png) center/cover no-repeat,linear-gradient(180deg,#f2a8c4,#ffd6b4 55%,#fff0c8)}
+#warp.on{opacity:1;pointer-events:auto}
+#warp h2{margin:0;font-size:clamp(40px,9vw,96px);font-weight:700;letter-spacing:.14em;text-indent:.14em;text-shadow:0 6px 36px rgba(120,50,90,.5)}
+#warp p{margin:6px 0 0;font-size:clamp(14px,2.4vw,19px);text-shadow:0 2px 12px rgba(120,50,90,.5)}
+#warp i{display:block;width:min(260px,60vw);height:6px;margin:20px auto 0;border-radius:6px;background:rgba(255,255,255,.4);overflow:hidden}
+#warp u{display:block;height:100%;width:0;background:#fff;transition:width 1.6s linear}
+#warp.on u{width:100%}
+@media(prefers-reduced-motion:reduce){#warp,#warp u{transition:none}#portal{animation:none}}
+/* ---- info ---- */
+#info{position:fixed;right:calc(22px + env(safe-area-inset-right,0px));top:calc(14px + env(safe-area-inset-top,0px));z-index:15;width:34px;height:34px;margin:0;padding:0;border:2px solid rgba(255,255,255,.7);border-radius:50%;background:rgba(255,255,255,.22);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;font:700 18px/1 'Zen Maru Gothic',system-ui,sans-serif;text-shadow:0 1px 6px rgba(10,40,100,.8);cursor:pointer;touch-action:manipulation;display:grid;place-items:center}
+#info:hover{background:rgba(255,255,255,.45)}
+#info:active{background:rgba(255,255,255,.65)}
+.touch #info{top:calc(60px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px))}
+#ip{position:fixed;inset:0;z-index:40;display:none;place-items:center;padding:20px;background:rgba(10,30,90,.38);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+#ip.show{display:grid}
+#ic{box-sizing:border-box;width:min(340px,86vw);text-align:center;padding:22px 26px 20px;border-radius:22px;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.6);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 10px 40px rgba(10,40,110,.35);text-shadow:0 1px 8px rgba(10,40,100,.7)}
+#ic h3{margin:0 0 14px;font-size:20px;letter-spacing:.08em}
+#ic p{margin:0 0 12px;font-size:14px;line-height:1.5}
+#ic p b{display:block;font-size:17px;letter-spacing:.02em}
+#ix{margin:6px 0 0;padding:7px 24px;border:2px solid #fff;border-radius:30px;background:rgba(255,255,255,.2);color:#fff;font:700 14px 'Zen Maru Gothic',system-ui,sans-serif;cursor:pointer;touch-action:manipulation}
+#ix:hover{background:rgba(255,255,255,.45)}
 </style>
 </head>
 <body>
@@ -54,6 +89,8 @@ canvas{touch-action:none}
   <span><span class="k">C</span> duduk di tanah</span>
   <span><span class="k">Z</span> tidur terlentang</span>
   <span><span class="k">M</span> musik on/off</span>
+  <span><span class="k">N</span> / <span class="k">B</span> ganti lagu</span>
+  <span><span class="k">F</span> masuk portal (dekat menara)</span>
   <span><span class="k">Drag mouse</span> putar kamera · <span class="k">Scroll</span> zoom</span>
 </div>
 <div id="tip"></div>
@@ -63,9 +100,14 @@ canvas{touch-action:none}
   <div id="ms"><button class="mbtn sbtn" id="bc">Tanah</button><button class="mbtn sbtn" id="bz">Tidur</button><button class="mbtn sbtn" id="bm">♪</button></div>
   <div id="mb"><button class="mbtn" id="be">Duduk</button><button class="mbtn" id="bs">Lari</button><button class="mbtn" id="bj">Lompat</button></div>
 </div>
+<div id="mus"><button id="mp" tabindex="-1" aria-label="Lagu sebelumnya">‹</button><span id="mn">♪</span><button id="mx" tabindex="-1" aria-label="Lagu berikutnya">›</button></div>
+<button id="portal"><span class="nt">F · </span>Masuk Nurture ✦</button>
 <div id="start"><div><h1>Shelter</h1><p>Inspired by Porter Robinson</p><b>Start World</b><p id="thint">Joystick kiri = jalan · geser layar kanan = putar kamera · cubit = zoom</p></div></div>
+<div id="warp"><div><h2>Nurture</h2><p>Loading.....</p><i><u></u></i></div></div>
 
 <!-- WAJIB: Tambahkan GLTFLoader.js di bawah Three.js -->
+<button id="info" tabindex="-1" aria-label="Info">i</button>
+<div id="ip" role="dialog" aria-modal="true" aria-labelledby="it"><div id="ic"><h3 id="it">Info</h3><p>Assets &amp; music by<b>@raidencatra</b></p><p>Concept &amp; development by<b>@chiiro.dev</b></p><button id="ix" tabindex="-1">Tutup</button></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 
@@ -73,15 +115,14 @@ canvas{touch-action:none}
 let TOUCH=matchMedia('(pointer:coarse)').matches||(navigator.maxTouchPoints>1&&/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent));
 /* ======== PENGATURAN ASET ======== */
 const ASSET={
- grass:'/grass_shelter.png',
- ground:'/ground_shelter.png',
- cloud:'/Awan_Kumulus_Lukisan_Transparan.png',
- hills:'/Padang_Rumput_dan_Langit_Biru_Dramatis.png',
- tree:'/tree_shelter.glb',                            
- music:'/porter.mpeg'
+ ground:'/asset/ground_nurture.png',
+ cloud:'/asset/Awan_Kumulus_Lukisan_Transparan.png',
+ hills:'/asset/Padang_Rumput_dan_Langit_Biru_Dramatis.png',
+ tree:'/asset/tree_shelter.glb',                            
+ music:'/asset/shelter.mp3',                  // ganti jika kamu punya musik khusus nurture
+ tower:'/asset/menara_shelter.glb'   // menara portal -> /nurture
 };
-const COUNT={grass:TOUCH?20000:30000,cloud:80,tree:3};
-const GRASS_SIZE=[.3,.62];
+const COUNT={cloud:80,tree:3}; // Properti grass dihapus
 /* ================================= */
 const T=THREE,rnd=(a,b)=>a+Math.random()*(b-a);
 const sm=(a,b,x)=>{x=Math.min(1,Math.max(0,(x-a)/(b-a)));return x*x*(3-2*x)};
@@ -141,32 +182,43 @@ function H(x,z){
   const d=Math.hypot(x,z),dt=Math.hypot(x-TREE.x,z-TREE.z);
   let h=(Math.sin(x*.03)*Math.cos(z*.026)*9+Math.sin(x*.07+z*.05)*2.2+Math.cos(z*.1-x*.04)*.8+Math.sin(x*.012+1.3)*Math.cos(z*.015)*12)*sm(8,40,d)*sm(6,22,dt);
   h+=11*Math.exp(-((x-STONE.x)**2+(z-STONE.z)**2)/1500);
-  return h+Math.max(0,d-250)*.08;
+  return h+Math.min(150,Math.max(0,d-250))*.08;
 }
+const GCOL=[new T.Color(0x6e9a44),new T.Color(0x8eb258),new T.Color(0xabc76c),new T.Color(0x4d7a2f)];
+function gcol(x,z,tc){const d=Math.hypot(x,z),n=.5+.5*Math.sin(x*.05+z*.07)*Math.cos(z*.04);
+ return tc.copy(GCOL[0]).lerp(GCOL[1],sm(150,30,d)*(.5+.5*n)).lerp(GCOL[2],sm(.35,.9,n)*sm(90,10,d)*.6).lerp(GCOL[3],sm(.55,.95,Math.sin(x*.022+z*.037))*.45)}
 const tg=new T.PlaneGeometry(800,800,170,170);tg.rotateX(-Math.PI/2);
-{
- const P=tg.attributes.position,cl=[],c1=new T.Color(0x6e9a44),c2=new T.Color(0x8eb258),c3=new T.Color(0xabc76c),sh=new T.Color(0x4d7a2f),tc=new T.Color();
- for(let i=0;i<P.count;i++){const x=P.getX(i),z=P.getZ(i),h=H(x,z),d=Math.hypot(x,z),n=.5+.5*Math.sin(x*.05+z*.07)*Math.cos(z*.04);
-  tc.copy(c1).lerp(c2,sm(150,30,d)*(.5+.5*n)).lerp(c3,sm(.35,.9,n)*sm(90,10,d)*.6).lerp(sh,sm(.55,.95,Math.sin(x*.022+z*.037))*.45);
-  cl.push(tc.r,tc.g,tc.b);P.setY(i,h);}
- tg.setAttribute('color',new T.Float32BufferAttribute(cl,3));tg.computeVertexNormals();
-}
+{const P=tg.attributes.position,cl=[],tc=new T.Color();
+ for(let i=0;i<P.count;i++){const x=P.getX(i),z=P.getZ(i);gcol(x,z,tc);cl.push(tc.r,tc.g,tc.b);P.setY(i,H(x,z))}
+ tg.setAttribute('color',new T.Float32BufferAttribute(cl,3));tg.computeVertexNormals();}
+/* tanah luar: melanjutkan medan sampai jauh melewati jarak kabut, jadi tidak ada tepi/celah di ujung dunia */
+{const CS=20,NC=84,HF=CS*NC/2,NV=NC+1,pp=new Float32Array(NV*NV*3),cc=new Float32Array(NV*NV*3),ix=[],tc=new T.Color();
+ for(let j=0;j<=NC;j++)for(let i=0;i<=NC;i++){const x=-HF+i*CS,z=-HF+j*CS,m=Math.max(Math.abs(x),Math.abs(z)),v=j*NV+i;
+  pp[v*3]=x;pp[v*3+1]=H(x,z)-.6*(1-sm(400,425,m));pp[v*3+2]=z;gcol(x,z,tc);cc[v*3]=tc.r;cc[v*3+1]=tc.g;cc[v*3+2]=tc.b}
+ for(let j=0;j<NC;j++)for(let i=0;i<NC;i++){const x0=-HF+i*CS,z0=-HF+j*CS;
+  if(x0>=-380&&x0+CS<=380&&z0>=-380&&z0+CS<=380)continue;
+  const a=j*NV+i,b=a+1,c=a+NV,d=c+1;ix.push(a,c,b,b,c,d)}
+ const og=new T.BufferGeometry();og.setAttribute('position',new T.BufferAttribute(pp,3));og.setAttribute('color',new T.BufferAttribute(cc,3));
+ og.setIndex(new T.BufferAttribute(new Uint32Array(ix),1));og.computeVertexNormals();
+ const om=new T.Mesh(og,toon(0xffffff,{vertexColors:true}));om.frustumCulled=false;S.add(om);}
 const ground=new T.Mesh(tg,toon(0xffffff,{vertexColors:true}));ground.receiveShadow=true;S.add(ground);
 
 tex(ASSET.ground,t=>buildGround(t,fit(t)));
 function buildGround(gt,F){
- const[u0,u1,v0,v1]=F.box,NX=5,NZ=3,VP=(NX+1)*(NZ+1),asp=Math.min(2,Math.max(.4,(v1-v0)/(u1-u0)/F.asp));
- const tiers=[[0,60,12,18],[60,140,18,28],[140,245,30,45]],items=[];
- for(const[r0,r1,w0,w1]of tiers){const sp=(w0+w1)/2*asp*.52; 
+ const[u0,u1,v0,v1]=F.box,asp=Math.min(2,Math.max(.4,(v1-v0)/(u1-u0)/F.asp));
+ /* tier: [r0,r1,lebarMin,lebarMax,jarak vertex,angkat] — lapisan tekstur tanah menutup rata dari tengah sampai r=700 (menyatu dengan kabut) */
+ const tiers=[[0,60,12,18,3.6,.1],[60,140,18,28,4.5,.1],[140,245,30,45,5.5,.12],[245,420,46,70,8,.25],[420,700,80,120,12,.5]],items=[];
+ for(const[r0,r1,w0,w1,vs,lift]of tiers){const sp=(w0+w1)/2*asp*.52,nx=Math.max(5,Math.ceil(w1/vs)),nz=Math.max(3,Math.ceil(w1*asp/vs));
   for(let gx=-r1;gx<=r1;gx+=sp)for(let gz=-r1;gz<=r1;gz+=sp){const x=gx+rnd(-.35,.35)*sp,z=gz+rnd(-.35,.35)*sp,r=Math.hypot(x,z);
-   if(r<r0||r>=r1||Math.hypot(x-TREE.x,z-TREE.z)<5.5)continue;items.push([x,z,rnd(w0,w1)])}}
- const N=items.length,pos=new Float32Array(N*VP*3),uv=new Float32Array(N*VP*2),tn=new Float32Array(N*VP*3),idx=new Uint32Array(N*NX*NZ*6);let n=0;
- items.forEach(([cx,cz,w],i)=>{const d=w*asp,yaw=rnd(0,6.283),cs=Math.cos(yaw),sn=Math.sin(yaw),u=Math.random(),b=n;
+   if(r<r0||r>=r1)continue;items.push([x,z,rnd(w0,w1),nx,nz,lift])}}
+ let NV=0,NI=0;for(const it of items){NV+=(it[3]+1)*(it[4]+1);NI+=it[3]*it[4]*6}
+ const pos=new Float32Array(NV*3),uv=new Float32Array(NV*2),tn=new Float32Array(NV*3),idx=new Uint32Array(NI);let n=0,k=0;
+ for(const[cx,cz,w,NX,NZ,lift]of items){const d=w*asp,yaw=rnd(0,6.283),cs=Math.cos(yaw),sn=Math.sin(yaw),u=Math.random(),b=n;
   for(let jz=0;jz<=NZ;jz++)for(let ix=0;ix<=NX;ix++){const lx=(ix/NX-.5)*w,lz=(jz/NZ-.5)*d,x=cx+lx*cs+lz*sn,z=cz-lx*sn+lz*cs,v=n++;
-   pos[v*3]=x;pos[v*3+1]=H(x,z)+.1;pos[v*3+2]=z;uv[v*2]=ix/NX;uv[v*2+1]=1-jz/NZ;
+   pos[v*3]=x;pos[v*3+1]=H(x,z)+lift;pos[v*3+2]=z;uv[v*2]=ix/NX;uv[v*2+1]=1-jz/NZ;
    tn[v*3]=.9+.16*u;tn[v*3+1]=.94+.12*u;tn[v*3+2]=.86+.08*u}
-  let k=i*NX*NZ*6;for(let jz=0;jz<NZ;jz++)for(let ix=0;ix<NX;ix++){const q=b+jz*(NX+1)+ix;
-   idx[k++]=q;idx[k++]=q+NX+1;idx[k++]=q+1;idx[k++]=q+1;idx[k++]=q+NX+1;idx[k++]=q+NX+2}});
+  for(let jz=0;jz<NZ;jz++)for(let ix=0;ix<NX;ix++){const q=b+jz*(NX+1)+ix;
+   idx[k++]=q;idx[k++]=q+NX+1;idx[k++]=q+1;idx[k++]=q+1;idx[k++]=q+NX+1;idx[k++]=q+NX+2}}
  const gg=new T.BufferGeometry();gg.setAttribute('position',new T.BufferAttribute(pos,3));gg.setAttribute('uv',new T.BufferAttribute(uv,2));
  gg.setAttribute('aTint',new T.BufferAttribute(tn,3));gg.setIndex(new T.BufferAttribute(idx,1));
  const gmesh=new T.Mesh(gg,new T.ShaderMaterial({uniforms:Object.assign({map:{value:gt},uBox:{value:new T.Vector4(u0,u1,v0,v1)},uTime:UT},FOGU),transparent:true,depthWrite:false,
@@ -179,34 +231,6 @@ function buildGround(gt,F){
     col=mix(col,fogColor,smoothstep(fogNear,fogFar,vD));gl_FragColor=vec4(col,c.a);}`}));
  gmesh.frustumCulled=false;gmesh.renderOrder=-.5;S.add(gmesh);}
 
-{const gp=[-.5,0,0,.5,0,0,.5,1,0,-.5,1,0,0,0,-.5,0,0,.5,0,1,.5,0,1,-.5],BB={value:new T.Vector4(0,1,0,1)},AS={value:1},
- gg=new T.BufferGeometry();gg.setAttribute('position',new T.Float32BufferAttribute(gp,3));
- gg.setAttribute('uv',new T.Float32BufferAttribute([0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,1],2));
- gg.setIndex([0,1,2,0,2,3,4,5,6,4,6,7]);
- const N=COUNT.grass,tint=new Float32Array(N*3),gi=new T.InstancedMesh(gg,new T.ShaderMaterial({
-  uniforms:Object.assign({map:{value:tex(ASSET.grass,t=>{const F=fit(t);BB.value.set(...F.box);AS.value=F.asp;gi.visible=true})},uTime:UT,uHero:UH,uBB:BB,uAsp:AS},FOGU),side:T.DoubleSide,
-  vertexShader:`uniform float uTime,uAsp;uniform vec3 uHero;uniform vec4 uBB;attribute vec3 aTint;varying vec2 vUv;varying vec3 vT;varying float vD,vH;
-   void main(){vUv=uv;vT=aTint;
-    float ht=uBB.w-uBB.z,pl=step(.1,abs(position.z)),lx=(uv.x-(uBB.x+uBB.y)*.5)*uAsp/ht;
-    vec3 lp=vec3(lx*(1.-pl),(uv.y-uBB.z)/ht,lx*pl);vH=lp.y;
-    mat4 m=modelMatrix*instanceMatrix;vec3 base=vec3(m[3].x,m[3].y,m[3].z);float sc=length(vec3(m[1]));
-    vec4 wp=m*vec4(lp,1.);float hh=clamp(lp.y,0.,1.),b=hh*hh,ph=base.x*.37+base.z*.29;
-    float w=sin(uTime*1.6+ph)*.55+sin(uTime*2.9+ph*2.1)*.22+sin(uTime*.45+base.x*.04+base.z*.03)*.6;
-    wp.x+=w*b*.26*sc;wp.z+=w*b*.12*sc;
-    vec2 d=wp.xz-uHero.xz;float dl=length(d),f=smoothstep(1.7,.15,dl)*step(abs(base.y-uHero.y),3.);
-    wp.xz+=(d/(dl+.001))*f*b*.9*sc;wp.y-=f*b*.35*sc;
-    vec4 mv=viewMatrix*wp;vD=-mv.z;gl_Position=projectionMatrix*mv;}`,
-  fragmentShader:`uniform sampler2D map;uniform vec3 fogColor;uniform float fogNear,fogFar;varying vec2 vUv;varying vec3 vT;varying float vD,vH;
-   void main(){vec4 c=texture2D(map,vUv);if(c.a<.5)discard;vec3 col=c.rgb*vT*mix(.8,1.,smoothstep(0.,.34,vH));
-    col=mix(col,fogColor,smoothstep(fogNear,fogFar,vD));gl_FragColor=vec4(col,1.);}`}),N),
-  M=new T.Matrix4(),Q=new T.Quaternion(),E=new T.Euler(),V=new T.Vector3(),SC=new T.Vector3();
- gi.visible=false;
- for(let i=0;i<N;i++){const a=rnd(0,6.283),r=Math.sqrt(Math.random())*(i<N*.3?45:150),x=Math.cos(a)*r,z=Math.sin(a)*r;
-  if(Math.hypot(x-TREE.x,z-TREE.z)<4.8){i--;continue}
-  E.set(rnd(-.06,.06),rnd(0,6.283),rnd(-.06,.06));Q.setFromEuler(E);const sz=rnd(GRASS_SIZE[0],GRASS_SIZE[1]);
-  M.compose(V.set(x,H(x,z)-.02,z),Q,SC.set(sz,sz,sz));gi.setMatrixAt(i,M);
-  const u=Math.random();tint[i*3]=.94+.1*u;tint[i*3+1]=.96+.08*u;tint[i*3+2]=.92+.08*u;}
- gg.setAttribute('aTint',new T.InstancedBufferAttribute(tint,3));gi.frustumCulled=false;S.add(gi);}
 /* ========================================================================= */
 /* ---------- SETUP POHON & AYUNAN 3D KUSTOM (TANPA GLB AYUNAN) ------------ */
 /* ========================================================================= */
@@ -222,7 +246,11 @@ const TREE_SPOTS = [
   { x: 90, z: 40, s: 0.3, swing: false }          
 ];
 
-const KEEP=[[2,8,16],[TREE.x,TREE.z,26],[STONE.x,STONE.z,34],[70,-70,12],[-95,25,12],[90,40,12]];
+/* ---------- MENARA PORTAL -> /nurture ---------- */
+// x,z = posisi · h = tinggi menara (±1,2x tinggi karakter) · rot = putaran Y · r = radius tabrak (otomatis) · reach = jarak tombol muncul · flip = balik atas-bawah jika terbalik
+// MEMPERBAIKI BUG: h diperbesar ke 5.2 agar lebih tinggi, x dan z diatur ke (32, -24) agar jauh dari pohon, dan flip diatur ke true agar posisinya tegak (tidak terbalik).
+const TOWER={x:32,z:-24,h:5.2,rot:0,r:1.8,reach:5,flip:true};
+const KEEP=[[2,8,16],[TREE.x,TREE.z,26],[STONE.x,STONE.z,34],[70,-70,12],[-95,25,12],[90,40,12],[TOWER.x,TOWER.z,6]];
 const centers=[];
 const N_TREE = COUNT.tree;
 const clear=(x,z,m)=>KEEP.every(([a,b,r])=>Math.hypot(x-a,z-b)>r+m);
@@ -336,6 +364,53 @@ gltfLoader.load(ASSET.tree, (gltf) => {
     }
   });
 });
+
+// ==========================================
+// MENARA PORTAL (GLB) — /tower_portal.glb
+// ==========================================
+function placeTower(o,auto=true){
+  // susunan: root(putar Y + skala) > fl(balik) > up(tegak) > o
+  const up=new T.Group(),fl=new T.Group(),root=new T.Group();
+  up.add(o);fl.add(up);root.add(fl);S.add(root);root.updateMatrixWorld(true);
+  const box=()=>new T.Box3().setFromObject(root);
+  if(auto){
+    const s0=box().getSize(new T.Vector3());
+    // 1) tegakkan: sumbu terpanjang model dijadikan sumbu vertikal
+    if(s0.x>s0.y*1.05&&s0.x>=s0.z)up.rotation.z=Math.PI/2;else if(s0.z>s0.y*1.05&&s0.z>s0.x)up.rotation.x=-Math.PI/2;
+    root.updateMatrixWorld(true);
+    // 2) ujung yang lebih lebar (bola/gerbang) di atas; TOWER.flip=true untuk membaliknya
+    const b0=box(),c0=b0.getCenter(new T.Vector3()),y0=b0.min.y,hh=b0.max.y-y0,v=new T.Vector3();let wb=0,wt=0;
+    o.traverse(n=>{if(!n.isMesh)return;const p=n.geometry.attributes.position,st=Math.max(1,Math.floor(p.count/4000));
+      for(let i=0;i<p.count;i+=st){v.fromBufferAttribute(p,i).applyMatrix4(n.matrixWorld);const r=Math.hypot(v.x-c0.x,v.z-c0.z);
+        if(v.y<y0+.2*hh)wb=Math.max(wb,r);else if(v.y>y0+.8*hh)wt=Math.max(wt,r)}});
+    if((wb>wt)!==!!TOWER.flip)fl.rotation.z=Math.PI;
+  }
+  root.rotation.y=TOWER.rot;root.updateMatrixWorld(true);
+  let b=box();root.scale.setScalar(TOWER.h/Math.max(.001,b.max.y-b.min.y));root.updateMatrixWorld(true);
+  b=box();const c=b.getCenter(new T.Vector3()),sz=b.getSize(new T.Vector3());
+  root.position.set(TOWER.x-c.x,H(TOWER.x,TOWER.z)-b.min.y-.15,TOWER.z-c.z);
+  TOWER.r=Math.min(3,Math.max(.5,Math.max(sz.x,sz.z)/2*.9));
+  root.traverse(n=>{if(n.isMesh)n.castShadow=n.receiveShadow=true});
+  solids.push([TOWER.x,TOWER.z,TOWER.r]);
+}
+function towerFallback(){ // menara sementara jika tower_portal.glb belum ada
+  const g=new T.Group(),w=toon(0xf0ecf2),gl=new T.MeshBasicMaterial({color:0xbfe9ff}),
+  m=(geo,mat,y)=>{const o=new T.Mesh(geo,mat);o.position.y=y;g.add(o);return o};
+  m(new T.CylinderGeometry(3.2,3.8,2,24),w,1);m(new T.CylinderGeometry(1.6,2.4,20,24),w,12);
+  m(new T.TorusGeometry(3.4,.35,12,40),gl,23).rotation.x=Math.PI/2;return g;
+}
+gltfLoader.load(ASSET.tower,g=>{
+  const info=[];
+  g.scene.traverse(n=>{if(!n.isMesh)return;
+    if(!n.geometry.attributes.normal)n.geometry.computeVertexNormals();   // GLB dari tool image-to-3D sering tanpa normal -> tampil hitam
+    const cv=o=>{info.push({map:!!o.map,vertexColors:!!o.vertexColors,color:o.color&&o.color.getHexString()});
+      const dark=!o.map&&!o.vertexColors&&o.color&&(o.color.r+o.color.g+o.color.b)<.45;   // warna terlalu gelap -> pakai putih krem
+      return new T.MeshToonMaterial({map:o.map||null,vertexColors:!!o.vertexColors,color:(o.map||o.vertexColors)?0xffffff:(dark?0xf0ecf2:(o.color||0xffffff)),emissive:o.emissive||0x000000,emissiveMap:o.emissiveMap||null,gradientMap:gm,transparent:o.transparent,opacity:o.opacity,side:T.DoubleSide,alphaTest:o.alphaTest})};
+    n.material=Array.isArray(n.material)?n.material.map(cv):cv(n.material)});
+  console.info('menara_shelter.glb material:',info.slice(0,5));
+  placeTower(g.scene);
+},undefined,()=>{console.warn('menara_shelter.glb belum ada — memakai menara sementara');placeTower(towerFallback(),false)});
+
 // ==========================================
 const hShadow=new T.Mesh(new T.CircleGeometry(.75,24),new T.MeshBasicMaterial({map:blobT,transparent:true,opacity:.6,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3}));
 hShadow.rotation.x=-Math.PI/2;hShadow.renderOrder=3;S.add(hShadow);
@@ -395,15 +470,49 @@ function sitKey(code){if(sitting&&(code=='KeyE'||code=='Space')){sitting=false;v
  else if(code=='KeyE'&&near)sitting=true}
 
 let pose=0;const pw={sit:0,lie:0};hero.rotation.order='YXZ';
-function poseKey(c){if(c=='KeyM'){if(bgm)bgm.muted=!bgm.muted;return}
+function poseKey(c){if(c=='KeyM'){setMuted(!muted);return}
  if(sitting||!grounded)return;if(c=='KeyC')pose=pose==1?0:1;else if(c=='KeyZ')pose=pose==2?0:2}
 
-const BGM_FILES=[ASSET.music,'porter.mpeg','audio.mp3','backsound.mp3','soundtrack.mp3','background.mp3','song.mp3','theme.mp3','shelter.mp3','Shelter.mp3'];
-let bgm=null;
-function startMusic(i=0){if(i>=BGM_FILES.length){console.warn('File mp3 tidak ditemukan di root folder. Isi BGM_FILES dengan nama file Anda.');return}
- const a=new Audio(BGM_FILES[i]);a.loop=true;a.volume=0;
- a.play().then(()=>{bgm=a;const f=setInterval(()=>{a.volume=Math.min(.6,a.volume+.02);if(a.volume>=.6)clearInterval(f)},100)})
-  .catch(e=>{if(e&&e.name==='NotSupportedError')startMusic(i+1)})}
+/* ---------- musik: playlist + ganti lagu ---------- */
+/* 5 lagu di root folder. index.html mulai dari Shelter, nurture.html mulai dari Life Like (START). Label selalu mengikuti lagu yang benar-benar terplay. */
+const TRACKS=[
+ {n:'Shelter',f:['/asset/shelter.mp3','shelter.mp3']},
+ {n:'Trying to a Live',f:['/asset/trying_to_alive.mp3','trying_to_alive.mp3']},
+ {n:'Life Like',f:['/asset/life_like.mp3','life_like.mp3']},
+ {n:'Catra',f:['/asset/catra.mpeg','catra.mpeg']},
+ {n:'Something',f:['/asset/something.mp3','something.mp3']}
+],START=0;
+let bgm=null,cur=-1,trk=START,tok=0,muted=false,silent=false,busy=false;const mn=document.getElementById('mn');
+const label=i=>{const s=TRACKS[i].n;mn.textContent='♪ '+s;mn.title=s};label(trk);
+const fade=(a,to,cb)=>{clearInterval(a._f);a._f=setInterval(()=>{const d=to-a.volume;if(Math.abs(d)<.03){a.volume=to;clearInterval(a._f);cb&&cb()}else a.volume=Math.min(1,Math.max(0,a.volume+Math.sign(d)*.03))},60)};
+function setMuted(v){muted=v;if(bgm&&!silent)bgm.muted=v;const b=document.getElementById('bm');if(b)b.classList.toggle('off',muted)}
+function playTrack(i){const L=TRACKS.length,idx=((i%L)+L)%L,my=++tok;trk=idx;busy=true;if(!bgm)label(idx);tryPlay(idx,0,my,false)}
+function tryPlay(idx,k,my,mute){
+ const tr=TRACKS[idx];
+ if(k>=tr.f.length){if(my!==tok)return;busy=false;console.warn('File mp3 tidak ditemukan untuk "'+tr.n+'". Cek daftar TRACKS.');
+  if(bgm&&cur>=0){trk=cur;label(cur)}else mn.textContent='♪ '+tr.n+' (file tidak ada)';return}
+ const a=new Audio(tr.f[k]);a.loop=true;a.volume=0;a.muted=mute||muted;
+ a.play().then(()=>{
+  if(my!==tok){a.pause();return}
+  const old=bgm;if(old&&old!==a)fade(old,0,()=>old.pause());
+  bgm=a;cur=idx;busy=false;silent=mute;label(idx);fade(a,.6)})
+ .catch(e=>{
+  if(my!==tok)return;
+  if(e&&e.name==='NotSupportedError')tryPlay(idx,k+1,my,mute);
+  else if(!mute)tryPlay(idx,k,my,true);   /* autoplay diblokir browser -> mulai senyap, otomatis bersuara di interaksi pertama */
+  else busy=false});
+}
+function unlock(force){
+ if(bgm){
+  if(silent){silent=false;bgm.muted=muted;const a=bgm;setTimeout(()=>{if(a.paused)a.play().catch(()=>{})},80)}
+  else if(bgm.paused)bgm.play().catch(()=>{});
+ }else if(force||!busy)playTrack(trk);
+}
+['pointerdown','touchend','click','keydown'].forEach(n=>addEventListener(n,e=>{if(n==='keydown'&&/^(Shift|Control|Alt|Meta|Escape|CapsLock|Tab)/.test(e.code))return;unlock()},true));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&bgm&&bgm.paused&&!silent)bgm.play().catch(()=>{})});
+{const b=(id,d)=>document.getElementById(id).addEventListener('click',e=>{e.currentTarget.blur();playTrack(trk+d)});b('mp',-1);b('mx',1);
+ addEventListener('keydown',e=>{if(e.repeat||!document.body.classList.contains('go'))return;if(e.code==='KeyN')playTrack(trk+1);else if(e.code==='KeyB')playTrack(trk-1)})}
+playTrack(trk);   /* putar otomatis saat halaman dimuat */
 
 /* ---------- input ---------- */
 const K={};
@@ -412,9 +521,11 @@ addEventListener('keydown',e=>{
  if(!e.repeat)poseKey(e.code);
  if(/^(Space|Arrow|ShiftLeft|ShiftRight)/.test(e.code))e.preventDefault();
 });
-addEventListener('keyup',e=>K[e.code]=0);addEventListener('blur',()=>{for(const k in K)K[k]=0});
-let yaw=0,pitch=.3,dist=9,JX=0,JY=0,mobUI=()=>{};
+addEventListener('keyup',e=>K[e.code]=0);addEventListener('blur',()=>{for(const k in K)K[k]=0;ptr.clear();resetJoy()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){for(const k in K)K[k]=0;ptr.clear();resetJoy()}});
+let yaw=0,pitch=.3,dist=9,JX=0,JY=0,mobUI=()=>{},resetJoy=()=>{JX=JY=0};
 const clamp=(a,b,x)=>Math.min(b,Math.max(a,x)),ptr=new Map(),pd=()=>{const[a,b]=[...ptr.values()];return Math.hypot(a.x-b.x,a.y-b.y)};let pinch=0;
+R.domElement.addEventListener('contextmenu',e=>e.preventDefault());
 R.domElement.addEventListener('pointerdown',e=>{ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});try{R.domElement.setPointerCapture(e.pointerId)}catch(_){}if(ptr.size==2)pinch=pd()});
 addEventListener('pointermove',e=>{const p=ptr.get(e.pointerId);if(!p)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;
  if(ptr.size==1){yaw-=dx*.005;pitch=clamp(-.05,1.25,pitch+dy*.004)}
@@ -422,7 +533,7 @@ addEventListener('pointermove',e=>{const p=ptr.get(e.pointerId);if(!p)return;con
 const pend=e=>{ptr.delete(e.pointerId);if(ptr.size==2)pinch=pd()};
 addEventListener('pointerup',pend);addEventListener('pointercancel',pend);
 addEventListener('wheel',e=>{dist=Math.min(20,Math.max(4,dist+e.deltaY*.01))},{passive:true});
-const $s=document.getElementById('start');$s.onclick=()=>{document.body.classList.add('go');$s.style.opacity=0;$s.style.pointerEvents='none';if(!bgm)startMusic()};
+const $s=document.getElementById('start');$s.onclick=()=>{document.body.classList.add('go');$s.style.opacity=0;$s.style.pointerEvents='none';unlock(true)};
 
 if(TOUCH)document.body.classList.add('touch');
 addEventListener('pointerdown',e=>{if(e.pointerType==='touch'&&!TOUCH){TOUCH=true;document.body.classList.add('touch')}},true);
@@ -445,13 +556,22 @@ document.addEventListener('gesturestart',e=>e.preventDefault());
  hold('bj',()=>{K.Space=1;sitKey('Space')},()=>{K.Space=0});
  hold('be',()=>sitKey('KeyE'));
  hold('bc',()=>poseKey('KeyC'));hold('bz',()=>poseKey('KeyZ'));
- hold('bm',()=>{poseKey('KeyM');$('bm').classList.toggle('off',!!(bgm&&bgm.muted))});
+ hold('bm',()=>poseKey('KeyM'));
  const bs=$('bs'),setSprint=v=>{K.ShiftLeft=v?1:0;bs.classList.toggle('on',!!v)};
  bs.addEventListener('pointerdown',e=>{e.preventDefault();setSprint(!K.ShiftLeft)});
  addEventListener('blur',()=>setSprint(false));
+ resetJoy=reset;
  const be=$('be');let last='';
  mobUI=(show,sit)=>{const k=show+'|'+sit;if(k===last)return;last=k;be.style.display=show?'grid':'none';be.textContent=sit?'Turun':'Duduk'};}
 addEventListener('resize',()=>{R.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()});
+
+/* ---------- info ---------- */
+{const b=document.getElementById('info'),p=document.getElementById('ip'),c=document.getElementById('ix');
+ const set=v=>{p.classList.toggle('show',v);if(v){for(const k in K)K[k]=0;resetJoy()}};
+ b.addEventListener('click',e=>{e.currentTarget.blur();set(true)});
+ c.addEventListener('click',e=>{e.currentTarget.blur();set(false)});
+ p.addEventListener('click',e=>{if(e.target===p)set(false)});
+ addEventListener('keydown',e=>{if(e.code==='Escape'&&p.classList.contains('show'))set(false)})}
 
 /* ---------- loop utama ---------- */
 const pos=new T.Vector3(2,0,8),vel=new T.Vector3(),camP=new T.Vector3(),clock=new T.Clock();
@@ -552,6 +672,14 @@ if(sitting){legL.rotation.x=legR.rotation.x=-1.45;armL.rotation.x=armR.rotation.
  R.render(S,cam);
 }
 tick();
+/* ---------- portal menara -> /nurture ---------- */
+{const pb=document.getElementById('portal'),wp=document.getElementById('warp');let go=0;
+ setInterval(()=>{pb.classList.toggle('show',!go&&document.body.classList.contains('go')&&!sitting&&Math.hypot(pos.x-TOWER.x,pos.z-TOWER.z)<TOWER.r+TOWER.reach)},150);
+ const enter=()=>{if(go||!pb.classList.contains('show'))return;go=1;pb.classList.remove('show');wp.classList.add('on');
+  if(bgm)fade(bgm,0);setTimeout(()=>{location.href='/nurture'},1800)};
+ pb.addEventListener('click',e=>{e.currentTarget.blur();enter()});
+ addEventListener('keydown',e=>{if(e.code==='KeyF'&&!e.repeat)enter()});
+ addEventListener('pageshow',e=>{if(e.persisted){go=0;wp.classList.remove('on');if(bgm)fade(bgm,.6)}})}
 </script>
 </body>
 </html>
