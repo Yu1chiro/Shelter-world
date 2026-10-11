@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shelter — Dunia 3D</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#5aa6e8;font-family:'Zen Maru Gothic',system-ui,sans-serif;color:#fff}
+canvas{display:block}
+#vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 60%,rgba(20,50,130,.22))}
+#brand{position:fixed;left:22px;top:16px;font-size:22px;font-weight:700;letter-spacing:.08em;text-shadow:0 2px 10px rgba(10,40,110,.6);pointer-events:none}
+#hud{position:fixed;left:0;right:0;bottom:16px;display:flex;justify-content:center;gap:6px 18px;flex-wrap:wrap;font-size:13px;text-shadow:0 1px 6px rgba(10,40,100,.8);pointer-events:none;padding:0 12px}
+.k{display:inline-block;background:rgba(255,255,255,.22);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.55);border-radius:9px;padding:1px 8px;margin:0 2px;font-weight:700}
+#tip{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);background:rgba(255,255,255,.22);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.55);border-radius:20px;padding:6px 18px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none;text-shadow:0 1px 6px rgba(10,40,100,.7)}
+#start{position:fixed;inset:0;display:grid;place-items:center;text-align:center;cursor:pointer;transition:opacity 1.2s;background:linear-gradient(180deg,rgba(34,68,180,.72),rgba(90,166,232,.55) 55%,rgba(185,230,220,.72))}
+#start h1{margin:0;font-size:clamp(56px,13vw,150px);font-weight:700;letter-spacing:.14em;text-indent:.14em;text-shadow:0 6px 40px rgba(10,40,120,.55)}
+#start p{margin:6px 0 28px;font-size:clamp(14px,2.4vw,19px);opacity:.95;text-shadow:0 2px 12px rgba(10,40,110,.6)}
+#start b{display:inline-block;border:2px solid #fff;border-radius:40px;padding:12px 34px;font-size:17px;background:rgba(255,255,255,.18);transition:background .3s}
+#start:hover b{background:rgba(255,255,255,.4)}
+@media(prefers-reduced-motion:reduce){#start{transition:none}}
+</style>
+</head>
+<body>
+<div id="vig"></div>
+<div id="brand">Shelter</div>
+<div id="hud">
+  <span><span class="k">W A S D</span> / <span class="k">↑ ← ↓ →</span> berjalan</span>
+  <span><span class="k">Space</span> lompat</span>
+  <span><span class="k">E</span> duduk di ayunan</span>
+  <span><span class="k">Enter</span> tahan untuk sprint</span>
+  <span><span class="k">C</span> duduk di tanah</span>
+  <span><span class="k">Z</span> tidur terlentang</span>
+  <span><span class="k">M</span> musik on/off</span>
+  <span><span class="k">Drag mouse</span> putar kamera · <span class="k">Scroll</span> zoom</span>
+</div>
+<div id="tip"></div>
+<div id="start"><div><h1>Shelter</h1><p>Inspired by Porter Robinson</p><b>Start World</b></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ======== PENGATURAN ASET: ganti nama file di sini saja (semua file di root folder, sejajar index.html) ======== */
+const ASSET={
+ grass:'/Lush_Grass_Tuft_with_White_Buds.png',          /* rumput tuft (berdiri) */
+ ground:'/Rumput_Hijau.png',        /* hamparan rumput penutup tanah (menempel, tanpa celah) */
+ cloud:'/Awan_Kumulus_Lukisan_Transparan.png',          /* awan */
+ hills:'/Padang_Rumput_dan_Langit_Biru_Dramatis.png',   /* panorama dataran, bukit & langit */
+ tree:'/Pohon_Tua_tanpa_Ayunan.png',                    /* pohon (tanpa ayunan) */
+ swing:'/Ayunan_Batu.png',                              /* tali + batu ayunan */
+ music:'/porter.mpeg'                                     /* musik latar */
+};
+const COUNT={grass:14000,cloud:80};                      /* jumlah rumput & awan */
+/* ============================================================================================================ */
+const T=THREE,rnd=(a,b)=>a+Math.random()*(b-a);
+const sm=(a,b,x)=>{x=Math.min(1,Math.max(0,(x-a)/(b-a)));return x*x*(3-2*x)};
+
+/* ---------- renderer, scene, kamera ---------- */
+const R=new T.WebGLRenderer({antialias:true});
+R.setPixelRatio(Math.min(devicePixelRatio,2));R.setSize(innerWidth,innerHeight);
+R.shadowMap.enabled=true;R.shadowMap.type=T.PCFSoftShadowMap;
+document.body.prepend(R.domElement);
+const S=new T.Scene(),FOG=0xa9dc86;
+S.fog=new T.Fog(FOG,130,400);
+const cam=new T.PerspectiveCamera(60,innerWidth/innerHeight,.1,900);
+
+/* ---------- loader aset gambar (file di root folder) ---------- */
+const TL=new T.TextureLoader(),MAXA=Math.min(8,R.capabilities.getMaxAnisotropy());
+const tex=u=>{const t=TL.load(u,undefined,undefined,()=>{
+ let b=document.getElementById('err');if(!b){b=document.createElement('div');b.id='err';b.style.cssText='position:fixed;left:12px;top:56px;max-width:90%;background:rgba(160,30,30,.85);padding:8px 12px;border-radius:10px;font-size:13px;z-index:9';document.body.appendChild(b)}
+ b.innerHTML+='File gambar tidak ditemukan: <b>'+u+'</b><br>';console.error('Gagal memuat',u)});t.anisotropy=MAXA;return t};
+const UT={value:0},UH={value:new T.Vector3()};          /* waktu & posisi karakter untuk shader angin */
+const FOGU={fogColor:{value:new T.Color(FOG)},fogNear:{value:130},fogFar:{value:400}};
+
+/* material toon (gaya anime) */
+const gm=new T.DataTexture(new Uint8Array([150,205,255]),3,1,T.LuminanceFormat);
+gm.minFilter=gm.magFilter=T.NearestFilter;gm.needsUpdate=true;
+const toon=(c,o={})=>new T.MeshToonMaterial(Object.assign({color:c,gradientMap:gm},o));
+
+/* ---------- langit biru pekat, cahaya siang ---------- */
+const sky=new T.Mesh(new T.SphereGeometry(600,32,16),new T.ShaderMaterial({
+  side:T.BackSide,depthWrite:false,fog:false,
+  uniforms:{a:{value:new T.Color(0x2244b4)},b:{value:new T.Color(0x57a4ea)},c:{value:new T.Color(FOG)}},
+  vertexShader:'varying vec3 p;void main(){p=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+  fragmentShader:'varying vec3 p;uniform vec3 a,b,c;void main(){float h=normalize(p).y;vec3 col=mix(c,b,smoothstep(0.,.2,h));col=mix(col,a,smoothstep(.15,.85,h));if(h<0.)col=c;gl_FragColor=vec4(col,1.);}'
+}));
+S.add(sky);
+/* panorama padang rumput & langit (aset) melingkari dunia, ikut pemain */
+const panoT=tex(ASSET.hills);panoT.wrapS=T.MirroredRepeatWrapping;
+const pano=new T.Mesh(new T.CylinderGeometry(480,480,251,64,1,true),new T.ShaderMaterial({
+  uniforms:{map:{value:panoT}},side:T.BackSide,transparent:true,depthWrite:false,fog:false,
+  vertexShader:'varying vec2 vUv;void main(){vUv=vec2(uv.x*4.,uv.y);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+  fragmentShader:'uniform sampler2D map;varying vec2 vUv;void main(){vec4 c=texture2D(map,vUv);gl_FragColor=vec4(c.rgb,1.-smoothstep(.72,1.,vUv.y));}'}));
+pano.renderOrder=-1;pano.frustumCulled=false;S.add(pano);
+const sunG=new T.Group();S.add(sunG);
+[[26,0xffffff,.9],[80,0xfff8dc,.22],[170,0xe6f4ff,.14]].forEach(([r,c,o])=>{
+  const m=new T.Mesh(new T.CircleGeometry(r,48),new T.MeshBasicMaterial({color:c,transparent:true,opacity:o,fog:false,depthWrite:false}));
+  m.position.set(-.45,.62,-.6).normalize().multiplyScalar(520);m.lookAt(0,0,0);sunG.add(m);
+});
+S.add(new T.HemisphereLight(0xd4ecff,0x9be07a,.8));
+const sun=new T.DirectionalLight(0xfff6dc,.9),SD=new T.Vector3(-.45,.7,-.55).normalize();
+sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-.0008;
+Object.assign(sun.shadow.camera,{left:-40,right:40,top:40,bottom:-40,near:1,far:160});
+S.add(sun,sun.target);
+
+/* ---------- medan: padang rumput bergelombang ---------- */
+const TREE={x:-9,z:-17},STONE={x:-62,z:-78};
+function H(x,z){
+  const d=Math.hypot(x,z),dt=Math.hypot(x-TREE.x,z-TREE.z);
+  let h=(Math.sin(x*.03)*Math.cos(z*.026)*9+Math.sin(x*.07+z*.05)*2.2+Math.cos(z*.1-x*.04)*.8+Math.sin(x*.012+1.3)*Math.cos(z*.015)*12)*sm(8,40,d)*sm(6,22,dt);
+  h+=11*Math.exp(-((x-STONE.x)**2+(z-STONE.z)**2)/1500);
+  return h+Math.max(0,d-250)*.08;
+}
+const tg=new T.PlaneGeometry(800,800,170,170);tg.rotateX(-Math.PI/2);
+{const P=tg.attributes.position,cl=[],c1=new T.Color(0x3f9f45),c2=new T.Color(0x6dbb44),c3=new T.Color(0x8fcb48),sh=new T.Color(0x2f8a3c),tc=new T.Color();
+ for(let i=0;i<P.count;i++){const x=P.getX(i),z=P.getZ(i),h=H(x,z),d=Math.hypot(x,z),n=.5+.5*Math.sin(x*.05+z*.07)*Math.cos(z*.04);
+  tc.copy(c1).lerp(c2,sm(150,30,d)*(.5+.5*n)).lerp(c3,sm(.35,.9,n)*sm(90,10,d)*.6).lerp(sh,sm(.55,.95,Math.sin(x*.022+z*.037))*.45);
+  cl.push(tc.r,tc.g,tc.b);P.setY(i,h);}
+ tg.setAttribute('color',new T.Float32BufferAttribute(cl,3));tg.computeVertexNormals();}
+const ground=new T.Mesh(tg,toon(0xffffff,{vertexColors:true}));ground.receiveShadow=true;S.add(ground);
+
+/* hamparan penutup tanah: aset Hamparan_Rumput_Hijau_Bercahaya.png, ditempel mengikuti bukit. Titik disebar grid+jitter agar seluruh dataran tertutup (tanpa celah) */
+{const IW=1448,IH=1086,BX=[7,1441],BY=[251,974],NX=8,NZ=5,VP=(NX+1)*(NZ+1),asp=(BY[1]-BY[0])/(BX[1]-BX[0]);
+ const tiers=[[0,60,12,18],[60,140,18,28],[140,245,30,45]],items=[];
+ for(const[r0,r1,w0,w1]of tiers){const sp=(w0+w1)/2*asp*.7;
+  for(let gx=-r1;gx<=r1;gx+=sp)for(let gz=-r1;gz<=r1;gz+=sp){const x=gx+rnd(-.35,.35)*sp,z=gz+rnd(-.35,.35)*sp,r=Math.hypot(x,z);
+   if(r<r0||r>=r1||Math.hypot(x-TREE.x,z-TREE.z)<5.5)continue;items.push([x,z,rnd(w0,w1)])}}
+ const N=items.length,pos=new Float32Array(N*VP*3),uv=new Float32Array(N*VP*2),tn=new Float32Array(N*VP*3),idx=new Uint32Array(N*NX*NZ*6);let n=0;
+ items.forEach(([cx,cz,w],i)=>{const d=w*asp,yaw=rnd(0,6.283),cs=Math.cos(yaw),sn=Math.sin(yaw),u=Math.random(),b=n;
+  for(let jz=0;jz<=NZ;jz++)for(let ix=0;ix<=NX;ix++){const lx=(ix/NX-.5)*w,lz=(jz/NZ-.5)*d,x=cx+lx*cs+lz*sn,z=cz-lx*sn+lz*cs,v=n++;
+   pos[v*3]=x;pos[v*3+1]=H(x,z)+.1;pos[v*3+2]=z;uv[v*2]=(BX[0]+ix/NX*(BX[1]-BX[0]))/IW;uv[v*2+1]=1-(BY[0]+jz/NZ*(BY[1]-BY[0]))/IH;
+   tn[v*3]=.9+.16*u;tn[v*3+1]=.94+.12*u;tn[v*3+2]=.86+.08*u}
+  let k=i*NX*NZ*6;for(let jz=0;jz<NZ;jz++)for(let ix=0;ix<NX;ix++){const q=b+jz*(NX+1)+ix;
+   idx[k++]=q;idx[k++]=q+NX+1;idx[k++]=q+1;idx[k++]=q+1;idx[k++]=q+NX+1;idx[k++]=q+NX+2}});
+ const gg=new T.BufferGeometry();gg.setAttribute('position',new T.BufferAttribute(pos,3));gg.setAttribute('uv',new T.BufferAttribute(uv,2));
+ gg.setAttribute('aTint',new T.BufferAttribute(tn,3));gg.setIndex(new T.BufferAttribute(idx,1));
+ const gmesh=new T.Mesh(gg,new T.ShaderMaterial({uniforms:Object.assign({map:{value:tex(ASSET.ground)},uTime:UT},FOGU),transparent:true,depthWrite:false,
+  polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,
+  vertexShader:`attribute vec3 aTint;varying vec2 vUv;varying vec3 vT;varying float vD;
+   void main(){vUv=uv;vT=aTint;vec4 mv=viewMatrix*modelMatrix*vec4(position,1.);vD=-mv.z;gl_Position=projectionMatrix*mv;}`,
+  fragmentShader:`uniform sampler2D map;uniform float uTime;uniform vec3 fogColor;uniform float fogNear,fogFar;varying vec2 vUv;varying vec3 vT;varying float vD;
+   void main(){vec2 q=vUv;q+=vec2(sin(uTime*.9+q.y*38.+q.x*11.),cos(uTime*.7+q.x*33.-q.y*9.))*.0022;
+    vec4 c=texture2D(map,q);if(c.a<.02)discard;vec3 col=c.rgb*vT*(1.+.05*sin(uTime*.8+q.x*25.+q.y*17.));
+    col=mix(col,fogColor,smoothstep(fogNear,fogFar,vD));gl_FragColor=vec4(col,c.a);}`}));
+ gmesh.frustumCulled=false;gmesh.renderOrder=-.5;S.add(gmesh);}
+
+/* rumput: seluruhnya memakai aset Lush_Grass_Tuft_with_White_Buds.png (2 bidang silang, bergoyang angin, menyingkir saat dilewati) */
+{const pb=.0782,gp=[-.5,-pb,0,.5,-pb,0,.5,1-pb,0,-.5,1-pb,0,0,-pb,-.5,0,-pb,.5,0,1-pb,.5,0,1-pb,-.5];
+ const gg=new T.BufferGeometry();gg.setAttribute('position',new T.Float32BufferAttribute(gp,3));
+ gg.setAttribute('uv',new T.Float32BufferAttribute([0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,1],2));
+ gg.setIndex([0,1,2,0,2,3,4,5,6,4,6,7]);
+ const N=COUNT.grass,tint=new Float32Array(N*3),gi=new T.InstancedMesh(gg,new T.ShaderMaterial({
+  uniforms:Object.assign({map:{value:tex(ASSET.grass)},uTime:UT,uHero:UH},FOGU),side:T.DoubleSide,
+  vertexShader:`uniform float uTime;uniform vec3 uHero;attribute vec3 aTint;varying vec2 vUv;varying vec3 vT;varying float vD;
+   void main(){vUv=uv;vT=aTint;mat4 m=modelMatrix*instanceMatrix;vec3 base=vec3(m[3].x,m[3].y,m[3].z);float sc=length(vec3(m[1]));
+    vec4 wp=m*vec4(position,1.);float hh=clamp((uv.y-.078)/.8,0.,1.),b=hh*hh,ph=base.x*.37+base.z*.29;
+    float w=sin(uTime*1.6+ph)*.55+sin(uTime*2.9+ph*2.1)*.22+sin(uTime*.45+base.x*.04+base.z*.03)*.6;
+    wp.x+=w*b*.26*sc;wp.z+=w*b*.12*sc;
+    vec2 d=wp.xz-uHero.xz;float dl=length(d),f=smoothstep(1.7,.15,dl)*step(abs(base.y-uHero.y),3.);
+    wp.xz+=(d/(dl+.001))*f*b*.9*sc;wp.y-=f*b*.35*sc;
+    vec4 mv=viewMatrix*wp;vD=-mv.z;gl_Position=projectionMatrix*mv;}`,
+  fragmentShader:`uniform sampler2D map;uniform vec3 fogColor;uniform float fogNear,fogFar;varying vec2 vUv;varying vec3 vT;varying float vD;
+   void main(){vec4 c=texture2D(map,vUv);if(c.a<.5)discard;vec3 col=c.rgb*vT*mix(.8,1.,smoothstep(.07,.35,vUv.y));
+    col=mix(col,fogColor,smoothstep(fogNear,fogFar,vD));gl_FragColor=vec4(col,1.);}`}),N),
+  M=new T.Matrix4(),Q=new T.Quaternion(),E=new T.Euler(),V=new T.Vector3(),SC=new T.Vector3();
+ for(let i=0;i<N;i++){const a=rnd(0,6.283),r=Math.sqrt(Math.random())*(i<N*.3?45:150),x=Math.cos(a)*r,z=Math.sin(a)*r;
+  if(Math.hypot(x-TREE.x,z-TREE.z)<4.8){i--;continue}
+  E.set(rnd(-.06,.06),rnd(0,6.283),rnd(-.06,.06));Q.setFromEuler(E);const sz=rnd(1.0,2.4);
+  M.compose(V.set(x,H(x,z)-.02,z),Q,SC.set(sz,sz,sz));gi.setMatrixAt(i,M);
+  const u=Math.random();tint[i*3]=.9+.18*u;tint[i*3+1]=.95+.13*u;tint[i*3+2]=.85+.07*u;}
+ gg.setAttribute('aTint',new T.InstancedBufferAttribute(tint,3));gi.frustumCulled=false;S.add(gi);}
+
+/* ---------- pohon raksasa dengan ayunan (aset) ---------- */
+/* Pohon_Tua_tanpa_Ayunan.png = Pohon_Tua_dengan_Ayunan_Batu.png tanpa tali & batu; Ayunan_Batu.png = tali & batu hasil potongan, digerakkan fisika ayunan */
+const solids=[],TREE_H=15,IMG=1254,XT=630,GP=1187,SINK=.1,PIV=[971,692],SEATPX=944,SPR=[921,692,1027,997];
+const treeT=tex(ASSET.tree),swingT=tex(ASSET.swing);
+const treeMat=new T.ShaderMaterial({uniforms:Object.assign({map:{value:treeT},uTime:UT},FOGU),side:T.DoubleSide,
+ vertexShader:`uniform float uTime;varying vec2 vUv;varying float vD;
+  void main(){vUv=uv;vec4 wp=modelMatrix*vec4(position,1.);float b=smoothstep(.3,1.,uv.y);b*=b;
+   float w=sin(uTime*.8+wp.x*.07+wp.z*.05)*.6+sin(uTime*1.7+wp.z*.11)*.25+sin(uTime*.35)*.4;
+   wp.x+=w*b*.22;wp.z+=w*b*.14;vec4 mv=viewMatrix*wp;vD=-mv.z;gl_Position=projectionMatrix*mv;}`,
+ fragmentShader:`uniform sampler2D map;uniform float uTime;uniform vec3 fogColor;uniform float fogNear,fogFar;varying vec2 vUv;varying float vD;
+  void main(){vec2 uv=vUv;float m=smoothstep(.33,.6,uv.y);
+   uv+=m*vec2(sin(uTime*1.3+uv.y*16.+uv.x*10.),cos(uTime*1.1+uv.x*14.-uv.y*9.))*.0014;
+   vec4 c=texture2D(map,uv);if(c.a<.5)discard;vec3 col=c.rgb*(1.+m*.05*sin(uTime*.9+uv.x*7.+uv.y*5.));
+   col=mix(col,fogColor,smoothstep(fogNear,fogFar,vD));gl_FragColor=vec4(col,1.);}`});
+const blobT=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d'),g=x.createRadialGradient(64,64,0,64,64,64);
+ g.addColorStop(0,'rgba(20,48,40,.85)');g.addColorStop(.6,'rgba(20,48,40,.45)');g.addColorStop(1,'rgba(20,48,40,0)');x.fillStyle=g;x.fillRect(0,0,128,128);return new T.CanvasTexture(c)})();
+function bigTree(x,z,s,swing){
+ const h=swing?TREE_H:TREE_H*s*1.5,k=h/IMG,gy=H(x,z);
+ const g=new T.Group();g.position.set(x,gy,z);S.add(g);
+ const geo=new T.PlaneGeometry(IMG*k,IMG*k);geo.translate((IMG/2-XT)*k,(GP-IMG/2)*k-SINK,0);
+ g.add(new T.Mesh(geo,treeMat),new T.Mesh(geo.clone().rotateY(Math.PI/2),treeMat));
+ const sh=new T.Mesh(new T.CircleGeometry(h*.42,32),new T.MeshBasicMaterial({map:blobT,transparent:true,opacity:.55,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
+ sh.rotation.x=-Math.PI/2;sh.position.set(h*.1,.14,h*.1);sh.renderOrder=2;g.add(sh);
+ if(swing){const p=new T.Group();p.position.set((PIV[0]-XT)*k,(GP-PIV[1])*k-SINK,0);g.add(p);
+  const L=(SEATPX-PIV[1])*k+.1,seat=new T.Object3D();seat.position.y=-L;p.add(seat);
+  const sw=(SPR[2]-SPR[0])*k,sh2=(SPR[3]-SPR[1])*k,sg=new T.PlaneGeometry(sw,sh2);sg.translate((SPR[0]-PIV[0])*k+sw/2,-sh2/2,0);
+  swSprite=new T.Mesh(sg,new T.MeshBasicMaterial({map:swingT,alphaTest:.5,side:T.DoubleSide}));S.add(swSprite);
+  swingG=p;seatM=seat;}
+ solids.push([x,z,2.9*s+.5]);
+}
+let swingG,seatM,swSprite;
+bigTree(TREE.x,TREE.z,1,true);
+[[70,-70,.55],[-95,25,.5],[90,40,.6]].forEach(a=>bigTree(...a));
+const hShadow=new T.Mesh(new T.CircleGeometry(.75,24),new T.MeshBasicMaterial({map:blobT,transparent:true,opacity:.6,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3}));
+hShadow.rotation.x=-Math.PI/2;hShadow.renderOrder=3;S.add(hShadow);
+
+/* batu putih berdiri di bukit jauh */
+{const sm_=toon(0xf0ecf2);
+ for(let i=0;i<16;i++){const a=rnd(0,6.283),r=Math.sqrt(Math.random())*26,x=STONE.x+Math.cos(a)*r,z=STONE.z+Math.sin(a)*r*.8,h=rnd(3,6.5);
+  const m=new T.Mesh(new T.BoxGeometry(rnd(.9,1.8),h,rnd(.9,1.4)),sm_);
+  m.position.set(x,H(x,z)+h/2-.4,z);m.rotation.set(rnd(-.06,.06),rnd(0,3),rnd(-.08,.08));m.castShadow=m.receiveShadow=true;S.add(m);}
+ for(let i=0;i<4;i++){const x=-40+i*6+rnd(-2,2),z=-50+rnd(-5,5),h=rnd(2.5,4.5);
+  const m=new T.Mesh(new T.BoxGeometry(1.2,h,1),sm_);m.position.set(x,H(x,z)+h/2-.3,z);m.rotation.y=rnd(0,3);m.castShadow=true;S.add(m);}}
+
+/* ---------- awan kumulus lukis (aset Awan_Kumulus_Lukisan_Transparan.png) ---------- */
+const clouds=new T.Group();S.add(clouds);
+const cloudA=tex(ASSET.cloud),cloudB=tex(ASSET.cloud);cloudB.repeat.x=-1;cloudB.offset.x=1;
+for(let i=0;i<COUNT.cloud;i++){const a=rnd(0,6.283),r=rnd(200,380),w=rnd(90,260),sp=new T.Sprite(new T.SpriteMaterial({map:i%2?cloudB:cloudA,fog:false,depthWrite:false,transparent:true,opacity:rnd(.88,1)}));
+ sp.scale.set(w,w/2,1);sp.position.set(Math.cos(a)*r,Math.random()<.65?rnd(22,75):rnd(85,150),Math.sin(a)*r);sp.userData={y:sp.position.y,ph:rnd(0,6.283),w};clouds.add(sp)}
+
+/* partikel: daun/serbuk terbang & kilau cahaya */
+const dot=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,0,32,32,32);
+ g.addColorStop(0,'#fff');g.addColorStop(.4,'rgba(255,255,255,.7)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,64,64);return new T.CanvasTexture(c)})();
+function cloud(n,spread,ymax,color,size,add){const g=new T.BufferGeometry(),p=new Float32Array(n*3);
+ for(let i=0;i<n;i++){p[i*3]=rnd(-spread,spread);p[i*3+1]=rnd(0,ymax);p[i*3+2]=rnd(-spread,spread);}
+ g.setAttribute('position',new T.BufferAttribute(p,3));
+ const m=new T.Points(g,new T.PointsMaterial({map:dot,color,size,transparent:true,depthWrite:false,blending:add?T.AdditiveBlending:T.NormalBlending}));
+ m.frustumCulled=false;S.add(m);return p;}
+const petals=cloud(180,32,24,0xcdf2d8,.55,false),motes=cloud(240,40,12,0xffffff,.8,true);
+
+/* ---------- karakter: rambut merah-mawar, pita putih, blus putih, rok peach ---------- */
+const hero=new T.Group();hero.scale.setScalar(.95);S.add(hero);
+const OL=new T.MeshBasicMaterial({color:0x4d2a33,side:T.BackSide});
+const mSkin=toon(0xffe3d3),mBlouse=toon(0xeeecf2),mSkirt=toon(0xf6b6a6),mSleeve=toon(0xf2a89a),mHair=toon(0xb24d5c),mBow=toon(0xf7f7fb),mShoe=toon(0xd98c88),
+      mEye=new T.MeshBasicMaterial({color:0x5a4a5c}),mWhite=new T.MeshBasicMaterial({color:0xffffff});
+const sph=(r,w=16,h=12)=>new T.SphereGeometry(r,w,h),cyl=(a,b,h,s=12)=>new T.CylinderGeometry(a,b,h,s);
+function part(geo,mat,x,y,z,p,ol=1.08){const m=new T.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;p.add(m);
+ if(ol){const o=new T.Mesh(geo,OL);o.scale.setScalar(ol);m.add(o)}return m}
+const pv=(x,y,z,p=hero)=>{const g=new T.Group();g.position.set(x,y,z);p.add(g);return g};
+const legL=pv(-.12,.82,0),legR=pv(.12,.82,0);
+[legL,legR].forEach(l=>{part(cyl(.065,.055,.8),mSkin,0,-.4,0,l);part(sph(.1),mShoe,0,-.8,.05,l).scale.set(1,.7,1.5)});
+const body=pv(0,0,0);
+part(cyl(.19,.25,.55,20),mBlouse,0,1.22,0,body);
+part(cyl(.25,.44,.42,20),mSkirt,0,.82,0,body);
+[-1,1].forEach(s=>part(sph(.12),mBlouse,s*.24,1.42,0,body,1.06).scale.set(1,.9,1));
+part(new T.BoxGeometry(.4,.34,.03),toon(0xc9a8e6),.04,1.18,.28,body,1.06).rotation.z=.4;
+const armL=pv(-.25,1.46,0,body),armR=pv(.25,1.46,0,body);
+[armL,armR].forEach(a=>{part(cyl(.05,.045,.6),mSleeve,0,-.3,0,a);part(sph(.06),mSkin,0,-.63,0,a)});
+const head=pv(0,1.8,0,body);
+part(sph(.3,24,18),mSkin,0,0,0,head,1.05);
+[-1,1].forEach(s=>{part(sph(.06),mEye,s*.11,-.03,.265,head,0).scale.set(.85,1.35,.5);part(sph(.02),mWhite,s*.095,0,.3,head,0);
+ const ch=part(sph(.045),new T.MeshBasicMaterial({color:0xffa8a0,transparent:true,opacity:.5}),s*.18,-.11,.22,head,0);ch.scale.set(1,.6,.3);
+ part(cyl(.05,.03,.8,8),mHair,s*.29,-.4,.04,head,1.1);
+ part(sph(.1),mBow,s*.11,.2,-.3,head,1.08).scale.set(1.4,1.6,.5);});
+part(sph(.07),mBow,0,.2,-.3,head,1.1);
+part(new T.SphereGeometry(.335,24,16,0,Math.PI*2,0,1.25),mHair,0,.02,-.02,head,1.04);
+for(let i=-2;i<=2;i++)part(sph(.09),mHair,i*.1,.15,.245-Math.abs(i)*.03,head,1.05).scale.set(1,1.2,.6);
+const hairB=pv(0,.12,-.2,head);
+part(cyl(.28,.18,1.5,16),mHair,0,-.72,0,hairB,1.04).scale.z=.6;
+let sitting=false,near=false,swAmp=.1;const seatW=new T.Vector3(),tip=document.getElementById('tip');
+function sitKey(code){if(sitting&&(code=='KeyE'||code=='Space')){sitting=false;vy=6;grounded=false;vel.x=Math.sin(face)*4;vel.z=Math.cos(face)*4}
+ else if(code=='KeyE'&&near)sitting=true}
+
+let pose=0;const pw={sit:0,lie:0};hero.rotation.order='YXZ';   /* pose: 0 berdiri, 1 duduk di tanah, 2 tidur terlentang */
+function poseKey(c){if(c=='KeyM'){if(bgm)bgm.muted=!bgm.muted;return}
+ if(sitting||!grounded)return;if(c=='KeyC')pose=pose==1?0:1;else if(c=='KeyZ')pose=pose==2?0:2}
+/* ayunan (aset) selalu menghadap kamera, tali searah pivot -> kursi */
+const swP=new T.Vector3(),swU=new T.Vector3(),swX=new T.Vector3(),swZ=new T.Vector3(),swM=new T.Matrix4();
+function orientSwing(){swingG.getWorldPosition(swP);swU.copy(swP).sub(seatW).normalize();
+ swZ.copy(cam.position).sub(swP);swZ.addScaledVector(swU,-swZ.dot(swU)).normalize();swX.crossVectors(swU,swZ);
+ swM.makeBasis(swX,swU,swZ);swSprite.quaternion.setFromRotationMatrix(swM);swSprite.position.copy(swP).addScaledVector(swZ,.1)}
+/* musik latar: otomatis main saat masuk dunia. Ganti nama file di urutan pertama bila perlu */
+const BGM_FILES=[ASSET.music,'porter.mpeg','audio.mp3','backsound.mp3','soundtrack.mp3','background.mp3','song.mp3','theme.mp3','shelter.mp3','Shelter.mp3'];
+let bgm=null;
+function startMusic(i=0){if(i>=BGM_FILES.length){console.warn('File mp3 tidak ditemukan di root folder. Isi BGM_FILES dengan nama file Anda.');return}
+ const a=new Audio(BGM_FILES[i]);a.loop=true;a.volume=0;
+ a.play().then(()=>{bgm=a;const f=setInterval(()=>{a.volume=Math.min(.6,a.volume+.02);if(a.volume>=.6)clearInterval(f)},100)})
+  .catch(e=>{if(e&&e.name==='NotSupportedError')startMusic(i+1)})}
+
+/* ---------- input ---------- */
+const K={};
+addEventListener('keydown',e=>{K[e.code]=1;sitKey(e.code);if(!e.repeat)poseKey(e.code);if(/^(Space|Arrow|Enter|NumpadEnter)/.test(e.code))e.preventDefault()});
+addEventListener('keyup',e=>K[e.code]=0);addEventListener('blur',()=>{for(const k in K)K[k]=0});
+let yaw=0,pitch=.3,dist=9,drag=false;
+R.domElement.addEventListener('pointerdown',()=>drag=true);
+addEventListener('pointerup',()=>drag=false);
+addEventListener('pointermove',e=>{if(!drag)return;yaw-=e.movementX*.005;pitch=Math.min(1.25,Math.max(-.05,pitch+e.movementY*.004))});
+addEventListener('wheel',e=>{dist=Math.min(20,Math.max(4,dist+e.deltaY*.01))},{passive:true});
+const $s=document.getElementById('start');
+$s.onclick=()=>{$s.style.opacity=0;$s.style.pointerEvents='none';if(!bgm)startMusic()};
+addEventListener('resize',()=>{R.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()});
+
+/* ---------- loop utama ---------- */
+const pos=new T.Vector3(2,0,8),vel=new T.Vector3(),camP=new T.Vector3(),clock=new T.Clock();
+let vy=0,grounded=true,ph=0,face=Math.PI,fov=60,run=0;
+pos.y=H(pos.x,pos.z);camP.set(2,4,17);
+
+function tick(){
+ requestAnimationFrame(tick);
+ const dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime;
+ swAmp+=((sitting?.42:.1)-swAmp)*Math.min(1,dt*.6);swingG.rotation.z=Math.sin(t*.94)*swAmp;swingG.updateMatrixWorld(true);seatM.getWorldPosition(seatW);orientSwing();
+ near=!sitting&&Math.hypot(pos.x-seatW.x,pos.z-seatW.z)<3.2&&Math.abs(pos.y-seatW.y)<3.5;
+ tip.style.opacity=near||sitting?1:0;tip.textContent=sitting?'E / Space — turun':'E — duduk di ayunan';
+ let f=(K.KeyW||K.ArrowUp?1:0)-(K.KeyS||K.ArrowDown?1:0),r=(K.KeyD||K.ArrowRight?1:0)-(K.KeyA||K.ArrowLeft?1:0);
+ if(sitting){pose=0;pw.sit=pw.lie=0}
+ if(pose&&(f||r||K.Space))pose=0;
+ pw.sit+=((pose==1?1:0)-pw.sit)*Math.min(1,dt*5);pw.lie+=((pose==2?1:0)-pw.lie)*Math.min(1,dt*4);
+ const lock=Math.max(pw.sit,pw.lie);
+ const len=Math.hypot(f,r),sprint=K.Enter||K.NumpadEnter;let tx=0,tz=0;
+ if(len){f/=len;r/=len;tx=-Math.sin(yaw)*f+Math.cos(yaw)*r;tz=-Math.cos(yaw)*f-Math.sin(yaw)*r}
+ const sp=(sprint?14:6.5)*(1-lock),k=Math.min(1,dt*(grounded?10:3));
+ vel.x+=(tx*sp-vel.x)*k;vel.z+=(tz*sp-vel.z)*k;
+ pos.x+=vel.x*dt;pos.z+=vel.z*dt;
+ for(const[sx,sz,sr]of solids){const dx=pos.x-sx,dz=pos.z-sz,d=Math.hypot(dx,dz),m=sr+.5;if(d<m&&d>0){pos.x=sx+dx/d*m;pos.z=sz+dz/d*m}}
+ const rr=Math.hypot(pos.x,pos.z);if(rr>230){pos.x*=230/rr;pos.z*=230/rr}
+ if(K.Space&&grounded&&lock<.3){vy=sprint?12:11;grounded=false}
+ vy-=28*dt;pos.y+=vy*dt;
+ const gy=H(pos.x,pos.z);
+ if(pos.y<=gy){pos.y=gy;vy=0;grounded=true}
+ else if(grounded&&pos.y-gy<.35&&vy<=0)pos.y=gy;
+ else if(pos.y-gy>.05)grounded=false;
+
+ if(sitting){pos.copy(seatW);vel.set(0,0,0);vy=0;grounded=true}
+ const spd=Math.hypot(vel.x,vel.z);
+ if(spd>.4){let da=Math.atan2(vel.x,vel.z)-face;da=Math.atan2(Math.sin(da),Math.cos(da));face+=da*Math.min(1,dt*12)}
+ hero.position.copy(pos);hero.rotation.y=face;
+ ph+=dt*(4+spd*1.1);run+=(Math.min(1,spd/6.5)-run)*Math.min(1,dt*8);
+ const air=grounded?0:1,sw=Math.sin(ph)*(.55+Math.min(spd,14)*.06)*run*(1-air*.6);
+ legL.rotation.x=sw+air*-.5;legR.rotation.x=-sw+air*.3;
+ armL.rotation.x=-sw*.9-air*1.1;armR.rotation.x=sw*.9-air*1.1;
+ armL.rotation.z=.12+air*.7;armR.rotation.z=-.12-air*.7;
+ body.rotation.x=run*(sprint?.25:.1);
+ body.position.y=Math.abs(Math.cos(ph))*.06*run+Math.sin(t*2)*.008;
+ head.rotation.z=Math.sin(t*1.3)*.03;
+ hairB.rotation.x=.08+air*.5+spd*.03+Math.sin(ph*2)*.06*run+Math.sin(t*2)*.03;
+ hairB.rotation.z=Math.sin(t*1.7)*.04;
+ {const ws=pw.sit,wl=pw.lie,mx=(a,b,w)=>a+(b-a)*w;
+  if(ws>.001||wl>.001){
+   legL.rotation.x=mx(mx(legL.rotation.x,-1.5,ws),0,wl);legR.rotation.x=mx(mx(legR.rotation.x,-1.5,ws),0,wl);
+   legL.rotation.z=-.1*ws;legR.rotation.z=.1*ws;
+   armL.rotation.x=mx(mx(armL.rotation.x,-.6,ws),0,wl);armR.rotation.x=mx(mx(armR.rotation.x,-.6,ws),0,wl);
+   armL.rotation.z=mx(mx(armL.rotation.z,.18,ws),-.45,wl);armR.rotation.z=mx(mx(armR.rotation.z,-.18,ws),.45,wl);
+   body.rotation.x=mx(mx(body.rotation.x,.12,ws),0,wl);
+   body.position.y+=Math.sin(t*1.9)*.012*wl;}
+  hero.rotation.x=-Math.PI/2*wl;
+  hero.position.y+=-.70*ws+.33*wl;hero.position.x+=Math.sin(face)*wl;hero.position.z+=Math.cos(face)*wl;}
+ if(sitting){legL.rotation.x=legR.rotation.x=-1.45;armL.rotation.x=armR.rotation.x=-2.3;armL.rotation.z=.15;armR.rotation.z=-.15;body.rotation.x=0;
+  face+=Math.atan2(Math.sin(Math.PI/2-face),Math.cos(Math.PI/2-face))*Math.min(1,dt*8);hero.rotation.y=face;
+  hero.position.set(seatW.x,seatW.y+.1-.78,seatW.z)}
+
+ const tgt=new T.Vector3(pos.x,pos.y+1.6-.65*pw.sit-1.0*pw.lie,pos.z),cp=new T.Vector3(
+  Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch)).multiplyScalar(dist+(sprint&&len?2:0)).add(tgt);
+ cp.y=Math.max(cp.y,H(cp.x,cp.z)+.8);
+ camP.lerp(cp,1-Math.exp(-dt*10));cam.position.copy(camP);cam.lookAt(tgt);
+ fov+=((sprint&&len?72:60)-fov)*Math.min(1,dt*5);if(Math.abs(cam.fov-fov)>.05){cam.fov=fov;cam.updateProjectionMatrix()}
+
+ sky.position.copy(pos);sunG.position.copy(pos);
+ sun.position.copy(pos).addScaledVector(SD,70);sun.target.position.copy(pos);
+ hShadow.visible=!sitting&&pw.lie<.5;hShadow.position.set(pos.x,pos.y+.14,pos.z);hShadow.scale.setScalar(1+pw.sit*.5);
+ clouds.rotation.y=t*.003;UT.value=t;UH.value.copy(pos);pano.position.set(pos.x,pos.y+61.5,pos.z);
+ for(const c of clouds.children){const u=c.userData;c.position.y=u.y+Math.sin(t*.06+u.ph)*1.8;c.scale.set(u.w*(1+Math.sin(t*.05+u.ph)*.015),u.w/2*(1+Math.sin(t*.05+u.ph)*.015),1)}
+ for(let i=0;i<petals.length/3;i++){const j=i*3;
+  petals[j+1]-=dt*(.9+(i%5)*.15);petals[j]+=Math.sin(t*.8+i)*dt*.9+dt*.6;petals[j+2]+=Math.cos(t*.6+i*1.3)*dt*.6;
+  if(petals[j+1]<pos.y-2)petals[j+1]=pos.y+rnd(18,24);
+  petals[j]=(petals[j]-pos.x+96)%64-32+pos.x;petals[j+2]=(petals[j+2]-pos.z+96)%64-32+pos.z;}
+ for(let i=0;i<motes.length/3;i++){const j=i*3;
+  motes[j+1]+=Math.sin(t*.7+i)*dt*.5;motes[j]+=Math.cos(t*.5+i*2)*dt*.4;
+  motes[j]=(motes[j]-pos.x+120)%80-40+pos.x;motes[j+2]=(motes[j+2]-pos.z+120)%80-40+pos.z;
+  if(motes[j+1]<H(motes[j],motes[j+2])+.5)motes[j+1]=H(motes[j],motes[j+2])+rnd(1,10);}
+ petals.length&&S.traverse(o=>{if(o.isPoints)o.geometry.attributes.position.needsUpdate=true});
+ R.render(S,cam);
+}
+tick();
+</script>
+</body>
+</html>
