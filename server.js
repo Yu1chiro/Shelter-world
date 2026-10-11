@@ -10,7 +10,7 @@ app.use(express.static(PUBLIC));
 
 // Route view (SPA): semua halaman dilayani satu file index.html
 const view = (req, res) => res.sendFile(path.join(PUBLIC, 'index.html'));
-['/', '/Awan_Kumulus_Lukisan_Transparan.png','/Rumput_Hijau.png', '/Lush_Grass_Tuft_with_White_Buds.png', '/Padang_Rumput_dan_Langit_Biru_Dramatis.png', '/Pohon_Tua_tanpa_Ayunan.png', '/Ayunan_Batu.png', '/porter.mpeg'].forEach((r) => app.get(r, view));
+['/', '/Awan_Kumulus_Lukisan_Transparan.png', '/ayunan_shelter.glb', '/tree_shelter.glb','/grass_shelter.png','/ground_shelter.png','/Rumput_Hijau.png', '/Lush_Grass_Tuft_with_White_Buds.png', '/Padang_Rumput_dan_Langit_Biru_Dramatis.png', '/Pohon_Tua_tanpa_Ayunan.png', '/Ayunan_Batu.png', '/porter.mpeg'].forEach((r) => app.get(r, view));
 
 // Fallback
 app.use((req, res) => res.status(404).sendFile(path.join(PUBLIC, 'index.html')));

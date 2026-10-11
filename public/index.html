@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Shelter — Dunia 3D</title>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -19,6 +19,28 @@ canvas{display:block}
 #start b{display:inline-block;border:2px solid #fff;border-radius:40px;padding:12px 34px;font-size:17px;background:rgba(255,255,255,.18);transition:background .3s}
 #start:hover b{background:rgba(255,255,255,.4)}
 @media(prefers-reduced-motion:reduce){#start{transition:none}}
+/* ---- kontrol mobile (aktif otomatis di layar sentuh) ---- */
+html,body{overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+canvas{touch-action:none}
+#mc{display:none}
+.touch.go #mc{display:block}
+.touch #hud{display:none}
+.touch #tip{bottom:auto;top:58px}
+#start #thint{display:none;margin:20px 0 0;font-size:14px}
+.touch #start #thint{display:block}
+#jz{position:fixed;left:0;bottom:0;width:52%;height:60%;touch-action:none}
+#jb{position:fixed;left:calc(26px + env(safe-area-inset-left,0px));bottom:calc(34px + env(safe-area-inset-bottom,0px));width:116px;height:116px;border-radius:50%;border:2px solid rgba(255,255,255,.55);background:rgba(255,255,255,.14);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);opacity:.6;pointer-events:none;transition:opacity .15s}
+#jb.act{opacity:1}
+#jk{position:absolute;left:32px;top:32px;width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.55);border:2px solid #fff;box-shadow:0 2px 10px rgba(10,40,110,.35)}
+#ms{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px));display:flex;gap:8px}
+#mb{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(26px + env(safe-area-inset-bottom,0px));width:170px;height:190px;pointer-events:none}
+.mbtn{position:absolute;display:grid;place-items:center;margin:0;padding:0;border:2px solid rgba(255,255,255,.7);background:rgba(255,255,255,.2);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff;font:700 13px 'Zen Maru Gothic',system-ui,sans-serif;text-shadow:0 1px 5px rgba(10,40,100,.8);border-radius:50%;touch-action:none;pointer-events:auto;cursor:pointer}
+.mbtn.on{background:rgba(255,255,255,.5);transform:scale(.94)}
+.sbtn{position:static;width:56px;height:38px;border-radius:14px;font-size:12px}
+#bm.off{opacity:.45}
+#bj{right:0;bottom:0;width:84px;height:84px;font-size:15px}
+#bs{right:96px;bottom:4px;width:60px;height:60px}
+#be{right:6px;bottom:96px;width:72px;height:72px;display:none}
 </style>
 </head>
 <body>
@@ -28,55 +50,67 @@ canvas{display:block}
   <span><span class="k">W A S D</span> / <span class="k">↑ ← ↓ →</span> berjalan</span>
   <span><span class="k">Space</span> lompat</span>
   <span><span class="k">E</span> duduk di ayunan</span>
-  <span><span class="k">Enter</span> tahan untuk sprint</span>
+  <span><span class="k">Shift</span> tahan untuk sprint</span>
   <span><span class="k">C</span> duduk di tanah</span>
   <span><span class="k">Z</span> tidur terlentang</span>
   <span><span class="k">M</span> musik on/off</span>
   <span><span class="k">Drag mouse</span> putar kamera · <span class="k">Scroll</span> zoom</span>
 </div>
 <div id="tip"></div>
-<div id="start"><div><h1>Shelter</h1><p>Inspired by Porter Robinson</p><b>Start World</b></div></div>
+<div id="mc">
+  <div id="jz"></div>
+  <div id="jb"><div id="jk"></div></div>
+  <div id="ms"><button class="mbtn sbtn" id="bc">Tanah</button><button class="mbtn sbtn" id="bz">Tidur</button><button class="mbtn sbtn" id="bm">♪</button></div>
+  <div id="mb"><button class="mbtn" id="be">Duduk</button><button class="mbtn" id="bs">Lari</button><button class="mbtn" id="bj">Lompat</button></div>
+</div>
+<div id="start"><div><h1>Shelter</h1><p>Inspired by Porter Robinson</p><b>Start World</b><p id="thint">Joystick kiri = jalan · geser layar kanan = putar kamera · cubit = zoom</p></div></div>
 
+<!-- WAJIB: Tambahkan GLTFLoader.js di bawah Three.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
 <script>
-/* ======== PENGATURAN ASET: ganti nama file di sini saja (semua file di root folder, sejajar index.html) ======== */
+let TOUCH=matchMedia('(pointer:coarse)').matches||(navigator.maxTouchPoints>1&&/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent));
+/* ======== PENGATURAN ASET ======== */
 const ASSET={
- grass:'/Lush_Grass_Tuft_with_White_Buds.png',          /* rumput tuft (berdiri) */
- ground:'/Rumput_Hijau.png',        /* hamparan rumput penutup tanah (menempel, tanpa celah) */
- cloud:'/Awan_Kumulus_Lukisan_Transparan.png',          /* awan */
- hills:'/Padang_Rumput_dan_Langit_Biru_Dramatis.png',   /* panorama dataran, bukit & langit */
- tree:'/Pohon_Tua_tanpa_Ayunan.png',                    /* pohon (tanpa ayunan) */
- swing:'/Ayunan_Batu.png',                              /* tali + batu ayunan */
- music:'/porter.mpeg'                                     /* musik latar */
+ grass:'/grass_shelter.png',
+ ground:'/ground_shelter.png',
+ cloud:'/Awan_Kumulus_Lukisan_Transparan.png',
+ hills:'/Padang_Rumput_dan_Langit_Biru_Dramatis.png',
+ tree:'/tree_shelter.glb',                            
+ music:'/porter.mpeg'
 };
-const COUNT={grass:14000,cloud:80};                      /* jumlah rumput & awan */
-/* ============================================================================================================ */
+const COUNT={grass:TOUCH?20000:30000,cloud:80,tree:3};
+const GRASS_SIZE=[.3,.62];
+/* ================================= */
 const T=THREE,rnd=(a,b)=>a+Math.random()*(b-a);
 const sm=(a,b,x)=>{x=Math.min(1,Math.max(0,(x-a)/(b-a)));return x*x*(3-2*x)};
 
-/* ---------- renderer, scene, kamera ---------- */
 const R=new T.WebGLRenderer({antialias:true});
-R.setPixelRatio(Math.min(devicePixelRatio,2));R.setSize(innerWidth,innerHeight);
+R.setPixelRatio(Math.min(devicePixelRatio,TOUCH?1.5:2));R.setSize(innerWidth,innerHeight);
 R.shadowMap.enabled=true;R.shadowMap.type=T.PCFSoftShadowMap;
 document.body.prepend(R.domElement);
 const S=new T.Scene(),FOG=0xa9dc86;
 S.fog=new T.Fog(FOG,130,400);
 const cam=new T.PerspectiveCamera(60,innerWidth/innerHeight,.1,900);
 
-/* ---------- loader aset gambar (file di root folder) ---------- */
 const TL=new T.TextureLoader(),MAXA=Math.min(8,R.capabilities.getMaxAnisotropy());
-const tex=u=>{const t=TL.load(u,undefined,undefined,()=>{
+const tex=(u,ok)=>{const t=TL.load(u,ok,undefined,()=>{
  let b=document.getElementById('err');if(!b){b=document.createElement('div');b.id='err';b.style.cssText='position:fixed;left:12px;top:56px;max-width:90%;background:rgba(160,30,30,.85);padding:8px 12px;border-radius:10px;font-size:13px;z-index:9';document.body.appendChild(b)}
  b.innerHTML+='File gambar tidak ditemukan: <b>'+u+'</b><br>';console.error('Gagal memuat',u)});t.anisotropy=MAXA;return t};
-const UT={value:0},UH={value:new T.Vector3()};          /* waktu & posisi karakter untuk shader angin */
+
+function fit(t){const im=t.image,W=im.naturalWidth||im.width,Hh=im.naturalHeight||im.height,sc=Math.min(1,512/Math.max(W,Hh)),w=Math.max(1,Math.round(W*sc)),h=Math.max(1,Math.round(Hh*sc));let box=[0,1,0,1];
+ try{const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');g.drawImage(im,0,0,w,h);const d=g.getImageData(0,0,w,h).data;let x0=w,x1=-1,y0=h,y1=-1;
+  for(let j=0;j<h;j++)for(let i=0;i<w;i++)if(d[(j*w+i)*4+3]>24){if(i<x0)x0=i;if(i>x1)x1=i;if(j<y0)y0=j;if(j>y1)y1=j}
+  if(x1>=0)box=[x0/w,(x1+1)/w,1-(y1+1)/h,1-y0/h]}catch(e){}
+ return{box,asp:W/Hh}}
+const UT={value:0},UH={value:new T.Vector3()};
 const FOGU={fogColor:{value:new T.Color(FOG)},fogNear:{value:130},fogFar:{value:400}};
 
-/* material toon (gaya anime) */
 const gm=new T.DataTexture(new Uint8Array([150,205,255]),3,1,T.LuminanceFormat);
 gm.minFilter=gm.magFilter=T.NearestFilter;gm.needsUpdate=true;
 const toon=(c,o={})=>new T.MeshToonMaterial(Object.assign({color:c,gradientMap:gm},o));
 
-/* ---------- langit biru pekat, cahaya siang ---------- */
 const sky=new T.Mesh(new T.SphereGeometry(600,32,16),new T.ShaderMaterial({
   side:T.BackSide,depthWrite:false,fog:false,
   uniforms:{a:{value:new T.Color(0x2244b4)},b:{value:new T.Color(0x57a4ea)},c:{value:new T.Color(FOG)}},
@@ -84,7 +118,6 @@ const sky=new T.Mesh(new T.SphereGeometry(600,32,16),new T.ShaderMaterial({
   fragmentShader:'varying vec3 p;uniform vec3 a,b,c;void main(){float h=normalize(p).y;vec3 col=mix(c,b,smoothstep(0.,.2,h));col=mix(col,a,smoothstep(.15,.85,h));if(h<0.)col=c;gl_FragColor=vec4(col,1.);}'
 }));
 S.add(sky);
-/* panorama padang rumput & langit (aset) melingkari dunia, ikut pemain */
 const panoT=tex(ASSET.hills);panoT.wrapS=T.MirroredRepeatWrapping;
 const pano=new T.Mesh(new T.CylinderGeometry(480,480,251,64,1,true),new T.ShaderMaterial({
   uniforms:{map:{value:panoT}},side:T.BackSide,transparent:true,depthWrite:false,fog:false,
@@ -98,11 +131,11 @@ const sunG=new T.Group();S.add(sunG);
 });
 S.add(new T.HemisphereLight(0xd4ecff,0x9be07a,.8));
 const sun=new T.DirectionalLight(0xfff6dc,.9),SD=new T.Vector3(-.45,.7,-.55).normalize();
-sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-.0008;
+sun.castShadow=true;sun.shadow.mapSize.set(TOUCH?1024:2048,TOUCH?1024:2048);sun.shadow.bias=-.0008;
 Object.assign(sun.shadow.camera,{left:-40,right:40,top:40,bottom:-40,near:1,far:160});
 S.add(sun,sun.target);
 
-/* ---------- medan: padang rumput bergelombang ---------- */
+/* ---------- medan ---------- */
 const TREE={x:-9,z:-17},STONE={x:-62,z:-78};
 function H(x,z){
   const d=Math.hypot(x,z),dt=Math.hypot(x-TREE.x,z-TREE.z);
@@ -111,101 +144,202 @@ function H(x,z){
   return h+Math.max(0,d-250)*.08;
 }
 const tg=new T.PlaneGeometry(800,800,170,170);tg.rotateX(-Math.PI/2);
-{const P=tg.attributes.position,cl=[],c1=new T.Color(0x3f9f45),c2=new T.Color(0x6dbb44),c3=new T.Color(0x8fcb48),sh=new T.Color(0x2f8a3c),tc=new T.Color();
+{
+ const P=tg.attributes.position,cl=[],c1=new T.Color(0x6e9a44),c2=new T.Color(0x8eb258),c3=new T.Color(0xabc76c),sh=new T.Color(0x4d7a2f),tc=new T.Color();
  for(let i=0;i<P.count;i++){const x=P.getX(i),z=P.getZ(i),h=H(x,z),d=Math.hypot(x,z),n=.5+.5*Math.sin(x*.05+z*.07)*Math.cos(z*.04);
   tc.copy(c1).lerp(c2,sm(150,30,d)*(.5+.5*n)).lerp(c3,sm(.35,.9,n)*sm(90,10,d)*.6).lerp(sh,sm(.55,.95,Math.sin(x*.022+z*.037))*.45);
   cl.push(tc.r,tc.g,tc.b);P.setY(i,h);}
- tg.setAttribute('color',new T.Float32BufferAttribute(cl,3));tg.computeVertexNormals();}
+ tg.setAttribute('color',new T.Float32BufferAttribute(cl,3));tg.computeVertexNormals();
+}
 const ground=new T.Mesh(tg,toon(0xffffff,{vertexColors:true}));ground.receiveShadow=true;S.add(ground);
 
-/* hamparan penutup tanah: aset Hamparan_Rumput_Hijau_Bercahaya.png, ditempel mengikuti bukit. Titik disebar grid+jitter agar seluruh dataran tertutup (tanpa celah) */
-{const IW=1448,IH=1086,BX=[7,1441],BY=[251,974],NX=8,NZ=5,VP=(NX+1)*(NZ+1),asp=(BY[1]-BY[0])/(BX[1]-BX[0]);
+tex(ASSET.ground,t=>buildGround(t,fit(t)));
+function buildGround(gt,F){
+ const[u0,u1,v0,v1]=F.box,NX=5,NZ=3,VP=(NX+1)*(NZ+1),asp=Math.min(2,Math.max(.4,(v1-v0)/(u1-u0)/F.asp));
  const tiers=[[0,60,12,18],[60,140,18,28],[140,245,30,45]],items=[];
- for(const[r0,r1,w0,w1]of tiers){const sp=(w0+w1)/2*asp*.7;
+ for(const[r0,r1,w0,w1]of tiers){const sp=(w0+w1)/2*asp*.52; 
   for(let gx=-r1;gx<=r1;gx+=sp)for(let gz=-r1;gz<=r1;gz+=sp){const x=gx+rnd(-.35,.35)*sp,z=gz+rnd(-.35,.35)*sp,r=Math.hypot(x,z);
    if(r<r0||r>=r1||Math.hypot(x-TREE.x,z-TREE.z)<5.5)continue;items.push([x,z,rnd(w0,w1)])}}
  const N=items.length,pos=new Float32Array(N*VP*3),uv=new Float32Array(N*VP*2),tn=new Float32Array(N*VP*3),idx=new Uint32Array(N*NX*NZ*6);let n=0;
  items.forEach(([cx,cz,w],i)=>{const d=w*asp,yaw=rnd(0,6.283),cs=Math.cos(yaw),sn=Math.sin(yaw),u=Math.random(),b=n;
   for(let jz=0;jz<=NZ;jz++)for(let ix=0;ix<=NX;ix++){const lx=(ix/NX-.5)*w,lz=(jz/NZ-.5)*d,x=cx+lx*cs+lz*sn,z=cz-lx*sn+lz*cs,v=n++;
-   pos[v*3]=x;pos[v*3+1]=H(x,z)+.1;pos[v*3+2]=z;uv[v*2]=(BX[0]+ix/NX*(BX[1]-BX[0]))/IW;uv[v*2+1]=1-(BY[0]+jz/NZ*(BY[1]-BY[0]))/IH;
+   pos[v*3]=x;pos[v*3+1]=H(x,z)+.1;pos[v*3+2]=z;uv[v*2]=ix/NX;uv[v*2+1]=1-jz/NZ;
    tn[v*3]=.9+.16*u;tn[v*3+1]=.94+.12*u;tn[v*3+2]=.86+.08*u}
   let k=i*NX*NZ*6;for(let jz=0;jz<NZ;jz++)for(let ix=0;ix<NX;ix++){const q=b+jz*(NX+1)+ix;
    idx[k++]=q;idx[k++]=q+NX+1;idx[k++]=q+1;idx[k++]=q+1;idx[k++]=q+NX+1;idx[k++]=q+NX+2}});
  const gg=new T.BufferGeometry();gg.setAttribute('position',new T.BufferAttribute(pos,3));gg.setAttribute('uv',new T.BufferAttribute(uv,2));
  gg.setAttribute('aTint',new T.BufferAttribute(tn,3));gg.setIndex(new T.BufferAttribute(idx,1));
- const gmesh=new T.Mesh(gg,new T.ShaderMaterial({uniforms:Object.assign({map:{value:tex(ASSET.ground)},uTime:UT},FOGU),transparent:true,depthWrite:false,
+ const gmesh=new T.Mesh(gg,new T.ShaderMaterial({uniforms:Object.assign({map:{value:gt},uBox:{value:new T.Vector4(u0,u1,v0,v1)},uTime:UT},FOGU),transparent:true,depthWrite:false,
   polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,
   vertexShader:`attribute vec3 aTint;varying vec2 vUv;varying vec3 vT;varying float vD;
    void main(){vUv=uv;vT=aTint;vec4 mv=viewMatrix*modelMatrix*vec4(position,1.);vD=-mv.z;gl_Position=projectionMatrix*mv;}`,
-  fragmentShader:`uniform sampler2D map;uniform float uTime;uniform vec3 fogColor;uniform float fogNear,fogFar;varying vec2 vUv;varying vec3 vT;varying float vD;
-   void main(){vec2 q=vUv;q+=vec2(sin(uTime*.9+q.y*38.+q.x*11.),cos(uTime*.7+q.x*33.-q.y*9.))*.0022;
+  fragmentShader:`uniform sampler2D map;uniform vec4 uBox;uniform float uTime;uniform vec3 fogColor;uniform float fogNear,fogFar;varying vec2 vUv;varying vec3 vT;varying float vD;
+   void main(){vec2 q=uBox.xz+vUv*(uBox.yw-uBox.xz);q+=vec2(sin(uTime*.9+q.y*38.+q.x*11.),cos(uTime*.7+q.x*33.-q.y*9.))*.0022;
     vec4 c=texture2D(map,q);if(c.a<.02)discard;vec3 col=c.rgb*vT*(1.+.05*sin(uTime*.8+q.x*25.+q.y*17.));
     col=mix(col,fogColor,smoothstep(fogNear,fogFar,vD));gl_FragColor=vec4(col,c.a);}`}));
  gmesh.frustumCulled=false;gmesh.renderOrder=-.5;S.add(gmesh);}
 
-/* rumput: seluruhnya memakai aset Lush_Grass_Tuft_with_White_Buds.png (2 bidang silang, bergoyang angin, menyingkir saat dilewati) */
-{const pb=.0782,gp=[-.5,-pb,0,.5,-pb,0,.5,1-pb,0,-.5,1-pb,0,0,-pb,-.5,0,-pb,.5,0,1-pb,.5,0,1-pb,-.5];
- const gg=new T.BufferGeometry();gg.setAttribute('position',new T.Float32BufferAttribute(gp,3));
+{const gp=[-.5,0,0,.5,0,0,.5,1,0,-.5,1,0,0,0,-.5,0,0,.5,0,1,.5,0,1,-.5],BB={value:new T.Vector4(0,1,0,1)},AS={value:1},
+ gg=new T.BufferGeometry();gg.setAttribute('position',new T.Float32BufferAttribute(gp,3));
  gg.setAttribute('uv',new T.Float32BufferAttribute([0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,1],2));
  gg.setIndex([0,1,2,0,2,3,4,5,6,4,6,7]);
  const N=COUNT.grass,tint=new Float32Array(N*3),gi=new T.InstancedMesh(gg,new T.ShaderMaterial({
-  uniforms:Object.assign({map:{value:tex(ASSET.grass)},uTime:UT,uHero:UH},FOGU),side:T.DoubleSide,
-  vertexShader:`uniform float uTime;uniform vec3 uHero;attribute vec3 aTint;varying vec2 vUv;varying vec3 vT;varying float vD;
-   void main(){vUv=uv;vT=aTint;mat4 m=modelMatrix*instanceMatrix;vec3 base=vec3(m[3].x,m[3].y,m[3].z);float sc=length(vec3(m[1]));
-    vec4 wp=m*vec4(position,1.);float hh=clamp((uv.y-.078)/.8,0.,1.),b=hh*hh,ph=base.x*.37+base.z*.29;
+  uniforms:Object.assign({map:{value:tex(ASSET.grass,t=>{const F=fit(t);BB.value.set(...F.box);AS.value=F.asp;gi.visible=true})},uTime:UT,uHero:UH,uBB:BB,uAsp:AS},FOGU),side:T.DoubleSide,
+  vertexShader:`uniform float uTime,uAsp;uniform vec3 uHero;uniform vec4 uBB;attribute vec3 aTint;varying vec2 vUv;varying vec3 vT;varying float vD,vH;
+   void main(){vUv=uv;vT=aTint;
+    float ht=uBB.w-uBB.z,pl=step(.1,abs(position.z)),lx=(uv.x-(uBB.x+uBB.y)*.5)*uAsp/ht;
+    vec3 lp=vec3(lx*(1.-pl),(uv.y-uBB.z)/ht,lx*pl);vH=lp.y;
+    mat4 m=modelMatrix*instanceMatrix;vec3 base=vec3(m[3].x,m[3].y,m[3].z);float sc=length(vec3(m[1]));
+    vec4 wp=m*vec4(lp,1.);float hh=clamp(lp.y,0.,1.),b=hh*hh,ph=base.x*.37+base.z*.29;
     float w=sin(uTime*1.6+ph)*.55+sin(uTime*2.9+ph*2.1)*.22+sin(uTime*.45+base.x*.04+base.z*.03)*.6;
     wp.x+=w*b*.26*sc;wp.z+=w*b*.12*sc;
     vec2 d=wp.xz-uHero.xz;float dl=length(d),f=smoothstep(1.7,.15,dl)*step(abs(base.y-uHero.y),3.);
     wp.xz+=(d/(dl+.001))*f*b*.9*sc;wp.y-=f*b*.35*sc;
     vec4 mv=viewMatrix*wp;vD=-mv.z;gl_Position=projectionMatrix*mv;}`,
-  fragmentShader:`uniform sampler2D map;uniform vec3 fogColor;uniform float fogNear,fogFar;varying vec2 vUv;varying vec3 vT;varying float vD;
-   void main(){vec4 c=texture2D(map,vUv);if(c.a<.5)discard;vec3 col=c.rgb*vT*mix(.8,1.,smoothstep(.07,.35,vUv.y));
+  fragmentShader:`uniform sampler2D map;uniform vec3 fogColor;uniform float fogNear,fogFar;varying vec2 vUv;varying vec3 vT;varying float vD,vH;
+   void main(){vec4 c=texture2D(map,vUv);if(c.a<.5)discard;vec3 col=c.rgb*vT*mix(.8,1.,smoothstep(0.,.34,vH));
     col=mix(col,fogColor,smoothstep(fogNear,fogFar,vD));gl_FragColor=vec4(col,1.);}`}),N),
   M=new T.Matrix4(),Q=new T.Quaternion(),E=new T.Euler(),V=new T.Vector3(),SC=new T.Vector3();
+ gi.visible=false;
  for(let i=0;i<N;i++){const a=rnd(0,6.283),r=Math.sqrt(Math.random())*(i<N*.3?45:150),x=Math.cos(a)*r,z=Math.sin(a)*r;
   if(Math.hypot(x-TREE.x,z-TREE.z)<4.8){i--;continue}
-  E.set(rnd(-.06,.06),rnd(0,6.283),rnd(-.06,.06));Q.setFromEuler(E);const sz=rnd(1.0,2.4);
+  E.set(rnd(-.06,.06),rnd(0,6.283),rnd(-.06,.06));Q.setFromEuler(E);const sz=rnd(GRASS_SIZE[0],GRASS_SIZE[1]);
   M.compose(V.set(x,H(x,z)-.02,z),Q,SC.set(sz,sz,sz));gi.setMatrixAt(i,M);
-  const u=Math.random();tint[i*3]=.9+.18*u;tint[i*3+1]=.95+.13*u;tint[i*3+2]=.85+.07*u;}
+  const u=Math.random();tint[i*3]=.94+.1*u;tint[i*3+1]=.96+.08*u;tint[i*3+2]=.92+.08*u;}
  gg.setAttribute('aTint',new T.InstancedBufferAttribute(tint,3));gi.frustumCulled=false;S.add(gi);}
+/* ========================================================================= */
+/* ---------- SETUP POHON & AYUNAN 3D KUSTOM (TANPA GLB AYUNAN) ------------ */
+/* ========================================================================= */
 
-/* ---------- pohon raksasa dengan ayunan (aset) ---------- */
-/* Pohon_Tua_tanpa_Ayunan.png = Pohon_Tua_dengan_Ayunan_Batu.png tanpa tali & batu; Ayunan_Batu.png = tali & batu hasil potongan, digerakkan fisika ayunan */
-const solids=[],TREE_H=15,IMG=1254,XT=630,GP=1187,SINK=.1,PIV=[971,692],SEATPX=944,SPR=[921,692,1027,997];
-const treeT=tex(ASSET.tree),swingT=tex(ASSET.swing);
-const treeMat=new T.ShaderMaterial({uniforms:Object.assign({map:{value:treeT},uTime:UT},FOGU),side:T.DoubleSide,
- vertexShader:`uniform float uTime;varying vec2 vUv;varying float vD;
-  void main(){vUv=uv;vec4 wp=modelMatrix*vec4(position,1.);float b=smoothstep(.3,1.,uv.y);b*=b;
-   float w=sin(uTime*.8+wp.x*.07+wp.z*.05)*.6+sin(uTime*1.7+wp.z*.11)*.25+sin(uTime*.35)*.4;
-   wp.x+=w*b*.22;wp.z+=w*b*.14;vec4 mv=viewMatrix*wp;vD=-mv.z;gl_Position=projectionMatrix*mv;}`,
- fragmentShader:`uniform sampler2D map;uniform float uTime;uniform vec3 fogColor;uniform float fogNear,fogFar;varying vec2 vUv;varying float vD;
-  void main(){vec2 uv=vUv;float m=smoothstep(.33,.6,uv.y);
-   uv+=m*vec2(sin(uTime*1.3+uv.y*16.+uv.x*10.),cos(uTime*1.1+uv.x*14.-uv.y*9.))*.0014;
-   vec4 c=texture2D(map,uv);if(c.a<.5)discard;vec3 col=c.rgb*(1.+m*.05*sin(uTime*.9+uv.x*7.+uv.y*5.));
-   col=mix(col,fogColor,smoothstep(fogNear,fogFar,vD));gl_FragColor=vec4(col,1.);}`});
 const blobT=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d'),g=x.createRadialGradient(64,64,0,64,64,64);
  g.addColorStop(0,'rgba(20,48,40,.85)');g.addColorStop(.6,'rgba(20,48,40,.45)');g.addColorStop(1,'rgba(20,48,40,0)');x.fillStyle=g;x.fillRect(0,0,128,128);return new T.CanvasTexture(c)})();
-function bigTree(x,z,s,swing){
- const h=swing?TREE_H:TREE_H*s*1.5,k=h/IMG,gy=H(x,z);
- const g=new T.Group();g.position.set(x,gy,z);S.add(g);
- const geo=new T.PlaneGeometry(IMG*k,IMG*k);geo.translate((IMG/2-XT)*k,(GP-IMG/2)*k-SINK,0);
- g.add(new T.Mesh(geo,treeMat),new T.Mesh(geo.clone().rotateY(Math.PI/2),treeMat));
- const sh=new T.Mesh(new T.CircleGeometry(h*.42,32),new T.MeshBasicMaterial({map:blobT,transparent:true,opacity:.55,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
- sh.rotation.x=-Math.PI/2;sh.position.set(h*.1,.14,h*.1);sh.renderOrder=2;g.add(sh);
- if(swing){const p=new T.Group();p.position.set((PIV[0]-XT)*k,(GP-PIV[1])*k-SINK,0);g.add(p);
-  const L=(SEATPX-PIV[1])*k+.1,seat=new T.Object3D();seat.position.y=-L;p.add(seat);
-  const sw=(SPR[2]-SPR[0])*k,sh2=(SPR[3]-SPR[1])*k,sg=new T.PlaneGeometry(sw,sh2);sg.translate((SPR[0]-PIV[0])*k+sw/2,-sh2/2,0);
-  swSprite=new T.Mesh(sg,new T.MeshBasicMaterial({map:swingT,alphaTest:.5,side:T.DoubleSide}));S.add(swSprite);
-  swingG=p;seatM=seat;}
- solids.push([x,z,2.9*s+.5]);
+
+const solids = [];
+const TREE_SPOTS = [
+  { x: TREE.x, z: TREE.z, s: 0.5, swing: true },  
+  { x: 70, z: -70, s: 0.20, swing: false },       
+  { x: -95, z: 25, s: 0.2, swing: false },        
+  { x: 90, z: 40, s: 0.3, swing: false }          
+];
+
+const KEEP=[[2,8,16],[TREE.x,TREE.z,26],[STONE.x,STONE.z,34],[70,-70,12],[-95,25,12],[90,40,12]];
+const centers=[];
+const N_TREE = COUNT.tree;
+const clear=(x,z,m)=>KEEP.every(([a,b,r])=>Math.hypot(x-a,z-b)>r+m);
+const put=(x,z,gap)=>{
+  if(TREE_SPOTS.length - 4 >= N_TREE || Math.hypot(x,z)>205 || !clear(x,z,0) || TREE_SPOTS.some(p=>Math.hypot(x-p.x,z-p.z)<gap)) return false;
+  TREE_SPOTS.push({x, z, s: rnd(0.15, 0.3), swing: false}); 
+  return true;
+};
+
+for(let t=0; t<600 && centers.length < Math.ceil(N_TREE/7); t++){
+  const a=rnd(0,6.283), r=rnd(40,185), cx=Math.cos(a)*r, cz=Math.sin(a)*r;
+  if(!clear(cx,cz,8)||centers.some(c=>Math.hypot(cx-c[0],cz-c[1])<50))continue;
+  centers.push([cx,cz]);
+  for(let j=0,n=Math.round(rnd(4,8)),q=0;j<n&&q<60;q++){
+    const aa=rnd(0,6.283), rr=Math.sqrt(Math.random())*17;
+    if(put(cx+Math.cos(aa)*rr, cz+Math.sin(aa)*rr, 7)) j++;
+  }
 }
-let swingG,seatM,swSprite;
-bigTree(TREE.x,TREE.z,1,true);
-[[70,-70,.55],[-95,25,.5],[90,40,.6]].forEach(a=>bigTree(...a));
+for(let t=0; TREE_SPOTS.length - 4 < N_TREE && t<800; t++){
+  const a=rnd(0,6.283), r=rnd(30,200); put(Math.cos(a)*r, Math.sin(a)*r, 22);
+}
+
+TREE_SPOTS.forEach(p => solids.push([p.x, p.z, 2.5 * p.s]));
+
+// ==========================================
+// MEMBUAT AYUNAN 3D KUSTOM DARI KODE MURNI
+// ==========================================
+let swingG = new T.Group(); S.add(swingG);
+let seatM = new T.Object3D(); 
+
+/* TWEAK 1: PANJANG TALI AYUNAN (Menentukan sedalam apa ayunan turun ke tanah) */
+const ROPE_LEN = 11.5; 
+seatM.position.y = -ROPE_LEN; 
+swingG.add(seatM);
+
+// Material Kustom agar warnanya cerah dan selaras dengan rumput
+const woodMat = toon(0x966F33); // Warna Coklat Kayu Terang
+const ropeMat = toon(0xEADDCD); // Warna Krem Tali Terang
+
+// 1. Buat Papan Kayu Ayunan
+const seatMesh = new T.Mesh(new T.BoxGeometry(2.4, 0.15, 0.8), woodMat);
+seatMesh.position.set(0, -ROPE_LEN, 0);
+seatMesh.castShadow = true;
+seatMesh.receiveShadow = true;
+swingG.add(seatMesh);
+
+// 2. Buat Tali Kiri & Kanan
+const ropeGeo = new T.CylinderGeometry(0.04, 0.04, ROPE_LEN, 8);
+
+const ropeL = new T.Mesh(ropeGeo, ropeMat);
+ropeL.position.set(-1.1, -ROPE_LEN / 2, 0);
+ropeL.castShadow = true;
+
+const ropeR = new T.Mesh(ropeGeo, ropeMat);
+ropeR.position.set(1.1, -ROPE_LEN / 2, 0);
+ropeR.castShadow = true;
+
+swingG.add(ropeL);
+swingG.add(ropeR);
+
+// ==========================================
+// LOAD & OPTIMASI WARNA POHON
+// ==========================================
+const gltfLoader = new THREE.GLTFLoader();
+gltfLoader.load(ASSET.tree, (gltf) => {
+  const baseTree = gltf.scene;
+  
+  baseTree.traverse(n => {
+    if(n.isMesh) {
+      n.castShadow = true;
+      n.receiveShadow = true;
+      
+      /* OPTIMASI WARNA POHON GELAP */
+      // Menimpa material gelap dengan Toon Material agar cerah dan menyatu
+      let oldMap = n.material.map;
+      n.material = new T.MeshToonMaterial({
+         map: oldMap || null,
+         color: oldMap ? 0xffffff : 0x7cb342, // Putih terang jika bertekstur, Hijau cerah jika polos
+         gradientMap: gm 
+      });
+    }
+  });
+
+  TREE_SPOTS.forEach(p => {
+    const model = baseTree.clone();
+    const gy = H(p.x, p.z);
+    model.position.set(p.x, gy - 0.5, p.z);
+    model.scale.setScalar(p.s);
+    
+    // Kunci rotasi pohon utama (yang ada ayunannya) agar arah dahan tetap
+    if(p.swing) {
+      model.rotation.y = 1.0; 
+    } else {
+      model.rotation.y = rnd(0, 6.283); 
+    }
+    
+    S.add(model);
+
+    const sh = new T.Mesh(new T.CircleGeometry(4 * p.s, 32), new T.MeshBasicMaterial({map: blobT, transparent: true, opacity: .65, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2}));
+    sh.rotation.x = -Math.PI / 2;
+    sh.position.set(p.x, Math.max(gy, H(p.x+1,p.z), H(p.x-1,p.z)) + 0.1, p.z);
+    S.add(sh);
+
+    if (p.swing) {
+      /* TWEAK 2: POSISI ENGSEL DI DAHAN POHON */
+      // X = menggeser engsel ke samping batang dahan
+      // Y = Ketinggian persis dahan
+      // Z = Kedalaman dari arah pandang dahan
+      const SWING_OFFSET = new T.Vector3(5.5, 13.5, 1.0);
+      swingG.position.copy(model.position).add(SWING_OFFSET);
+    }
+  });
+});
+// ==========================================
 const hShadow=new T.Mesh(new T.CircleGeometry(.75,24),new T.MeshBasicMaterial({map:blobT,transparent:true,opacity:.6,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3}));
 hShadow.rotation.x=-Math.PI/2;hShadow.renderOrder=3;S.add(hShadow);
 
-/* batu putih berdiri di bukit jauh */
 {const sm_=toon(0xf0ecf2);
  for(let i=0;i<16;i++){const a=rnd(0,6.283),r=Math.sqrt(Math.random())*26,x=STONE.x+Math.cos(a)*r,z=STONE.z+Math.sin(a)*r*.8,h=rnd(3,6.5);
   const m=new T.Mesh(new T.BoxGeometry(rnd(.9,1.8),h,rnd(.9,1.4)),sm_);
@@ -213,13 +347,11 @@ hShadow.rotation.x=-Math.PI/2;hShadow.renderOrder=3;S.add(hShadow);
  for(let i=0;i<4;i++){const x=-40+i*6+rnd(-2,2),z=-50+rnd(-5,5),h=rnd(2.5,4.5);
   const m=new T.Mesh(new T.BoxGeometry(1.2,h,1),sm_);m.position.set(x,H(x,z)+h/2-.3,z);m.rotation.y=rnd(0,3);m.castShadow=true;S.add(m);}}
 
-/* ---------- awan kumulus lukis (aset Awan_Kumulus_Lukisan_Transparan.png) ---------- */
 const clouds=new T.Group();S.add(clouds);
 const cloudA=tex(ASSET.cloud),cloudB=tex(ASSET.cloud);cloudB.repeat.x=-1;cloudB.offset.x=1;
 for(let i=0;i<COUNT.cloud;i++){const a=rnd(0,6.283),r=rnd(200,380),w=rnd(90,260),sp=new T.Sprite(new T.SpriteMaterial({map:i%2?cloudB:cloudA,fog:false,depthWrite:false,transparent:true,opacity:rnd(.88,1)}));
  sp.scale.set(w,w/2,1);sp.position.set(Math.cos(a)*r,Math.random()<.65?rnd(22,75):rnd(85,150),Math.sin(a)*r);sp.userData={y:sp.position.y,ph:rnd(0,6.283),w};clouds.add(sp)}
 
-/* partikel: daun/serbuk terbang & kilau cahaya */
 const dot=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,0,32,32,32);
  g.addColorStop(0,'#fff');g.addColorStop(.4,'rgba(255,255,255,.7)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,64,64);return new T.CanvasTexture(c)})();
 function cloud(n,spread,ymax,color,size,add){const g=new T.BufferGeometry(),p=new Float32Array(n*3);
@@ -229,7 +361,7 @@ function cloud(n,spread,ymax,color,size,add){const g=new T.BufferGeometry(),p=ne
  m.frustumCulled=false;S.add(m);return p;}
 const petals=cloud(180,32,24,0xcdf2d8,.55,false),motes=cloud(240,40,12,0xffffff,.8,true);
 
-/* ---------- karakter: rambut merah-mawar, pita putih, blus putih, rok peach ---------- */
+/* ---------- karakter ---------- */
 const hero=new T.Group();hero.scale.setScalar(.95);S.add(hero);
 const OL=new T.MeshBasicMaterial({color:0x4d2a33,side:T.BackSide});
 const mSkin=toon(0xffe3d3),mBlouse=toon(0xeeecf2),mSkirt=toon(0xf6b6a6),mSleeve=toon(0xf2a89a),mHair=toon(0xb24d5c),mBow=toon(0xf7f7fb),mShoe=toon(0xd98c88),
@@ -262,15 +394,10 @@ let sitting=false,near=false,swAmp=.1;const seatW=new T.Vector3(),tip=document.g
 function sitKey(code){if(sitting&&(code=='KeyE'||code=='Space')){sitting=false;vy=6;grounded=false;vel.x=Math.sin(face)*4;vel.z=Math.cos(face)*4}
  else if(code=='KeyE'&&near)sitting=true}
 
-let pose=0;const pw={sit:0,lie:0};hero.rotation.order='YXZ';   /* pose: 0 berdiri, 1 duduk di tanah, 2 tidur terlentang */
+let pose=0;const pw={sit:0,lie:0};hero.rotation.order='YXZ';
 function poseKey(c){if(c=='KeyM'){if(bgm)bgm.muted=!bgm.muted;return}
  if(sitting||!grounded)return;if(c=='KeyC')pose=pose==1?0:1;else if(c=='KeyZ')pose=pose==2?0:2}
-/* ayunan (aset) selalu menghadap kamera, tali searah pivot -> kursi */
-const swP=new T.Vector3(),swU=new T.Vector3(),swX=new T.Vector3(),swZ=new T.Vector3(),swM=new T.Matrix4();
-function orientSwing(){swingG.getWorldPosition(swP);swU.copy(swP).sub(seatW).normalize();
- swZ.copy(cam.position).sub(swP);swZ.addScaledVector(swU,-swZ.dot(swU)).normalize();swX.crossVectors(swU,swZ);
- swM.makeBasis(swX,swU,swZ);swSprite.quaternion.setFromRotationMatrix(swM);swSprite.position.copy(swP).addScaledVector(swZ,.1)}
-/* musik latar: otomatis main saat masuk dunia. Ganti nama file di urutan pertama bila perlu */
+
 const BGM_FILES=[ASSET.music,'porter.mpeg','audio.mp3','backsound.mp3','soundtrack.mp3','background.mp3','song.mp3','theme.mp3','shelter.mp3','Shelter.mp3'];
 let bgm=null;
 function startMusic(i=0){if(i>=BGM_FILES.length){console.warn('File mp3 tidak ditemukan di root folder. Isi BGM_FILES dengan nama file Anda.');return}
@@ -280,15 +407,50 @@ function startMusic(i=0){if(i>=BGM_FILES.length){console.warn('File mp3 tidak di
 
 /* ---------- input ---------- */
 const K={};
-addEventListener('keydown',e=>{K[e.code]=1;sitKey(e.code);if(!e.repeat)poseKey(e.code);if(/^(Space|Arrow|Enter|NumpadEnter)/.test(e.code))e.preventDefault()});
+addEventListener('keydown',e=>{
+ K[e.code]=1;sitKey(e.code);
+ if(!e.repeat)poseKey(e.code);
+ if(/^(Space|Arrow|ShiftLeft|ShiftRight)/.test(e.code))e.preventDefault();
+});
 addEventListener('keyup',e=>K[e.code]=0);addEventListener('blur',()=>{for(const k in K)K[k]=0});
-let yaw=0,pitch=.3,dist=9,drag=false;
-R.domElement.addEventListener('pointerdown',()=>drag=true);
-addEventListener('pointerup',()=>drag=false);
-addEventListener('pointermove',e=>{if(!drag)return;yaw-=e.movementX*.005;pitch=Math.min(1.25,Math.max(-.05,pitch+e.movementY*.004))});
+let yaw=0,pitch=.3,dist=9,JX=0,JY=0,mobUI=()=>{};
+const clamp=(a,b,x)=>Math.min(b,Math.max(a,x)),ptr=new Map(),pd=()=>{const[a,b]=[...ptr.values()];return Math.hypot(a.x-b.x,a.y-b.y)};let pinch=0;
+R.domElement.addEventListener('pointerdown',e=>{ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});try{R.domElement.setPointerCapture(e.pointerId)}catch(_){}if(ptr.size==2)pinch=pd()});
+addEventListener('pointermove',e=>{const p=ptr.get(e.pointerId);if(!p)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;
+ if(ptr.size==1){yaw-=dx*.005;pitch=clamp(-.05,1.25,pitch+dy*.004)}
+ else if(ptr.size==2){const d=pd();dist=clamp(4,20,dist-(d-pinch)*.03);pinch=d}});
+const pend=e=>{ptr.delete(e.pointerId);if(ptr.size==2)pinch=pd()};
+addEventListener('pointerup',pend);addEventListener('pointercancel',pend);
 addEventListener('wheel',e=>{dist=Math.min(20,Math.max(4,dist+e.deltaY*.01))},{passive:true});
-const $s=document.getElementById('start');
-$s.onclick=()=>{$s.style.opacity=0;$s.style.pointerEvents='none';if(!bgm)startMusic()};
+const $s=document.getElementById('start');$s.onclick=()=>{document.body.classList.add('go');$s.style.opacity=0;$s.style.pointerEvents='none';if(!bgm)startMusic()};
+
+if(TOUCH)document.body.classList.add('touch');
+addEventListener('pointerdown',e=>{if(e.pointerType==='touch'&&!TOUCH){TOUCH=true;document.body.classList.add('touch')}},true);
+addEventListener('contextmenu',e=>{if(TOUCH)e.preventDefault()});
+document.addEventListener('gesturestart',e=>e.preventDefault());
+{const $=id=>document.getElementById(id),jz=$('jz'),jb=$('jb'),jk=$('jk'),LIM=46,HALF=58;let jid=null,cx=0,cy=0;
+ const reset=()=>{jid=null;JX=JY=0;jk.style.transform='';jb.style.left=jb.style.top=jb.style.bottom='';jb.classList.remove('act')};
+ const move=e=>{let dx=e.clientX-cx,dy=e.clientY-cy;const d=Math.hypot(dx,dy);if(d>LIM){dx*=LIM/d;dy*=LIM/d}
+  jk.style.transform='translate('+dx+'px,'+dy+'px)';
+  const m=Math.hypot(dx,dy)/LIM,dz=.12,s=m<dz?0:(m-dz)/(1-dz)/m;
+  JX=dx/LIM*s;JY=-dy/LIM*s};
+ jz.addEventListener('pointerdown',e=>{if(jid!==null)return;e.preventDefault();jid=e.pointerId;try{jz.setPointerCapture(e.pointerId)}catch(_){}
+  cx=clamp(HALF,innerWidth-HALF,e.clientX);cy=clamp(HALF,innerHeight-HALF,e.clientY);
+  jb.style.left=(cx-HALF)+'px';jb.style.top=(cy-HALF)+'px';jb.style.bottom='auto';jb.classList.add('act');move(e)});
+ jz.addEventListener('pointermove',e=>{if(e.pointerId===jid)move(e)});
+ ['pointerup','pointercancel','lostpointercapture'].forEach(n=>jz.addEventListener(n,e=>{if(e.pointerId===jid)reset()}));
+
+ const hold=(id,on,off)=>{const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();try{b.setPointerCapture(e.pointerId)}catch(_){}b.classList.add('on');on()});
+  const up=()=>{if(b.classList.contains('on')){b.classList.remove('on');if(off)off()}};['pointerup','pointercancel','lostpointercapture'].forEach(n=>b.addEventListener(n,up))};
+ hold('bj',()=>{K.Space=1;sitKey('Space')},()=>{K.Space=0});
+ hold('be',()=>sitKey('KeyE'));
+ hold('bc',()=>poseKey('KeyC'));hold('bz',()=>poseKey('KeyZ'));
+ hold('bm',()=>{poseKey('KeyM');$('bm').classList.toggle('off',!!(bgm&&bgm.muted))});
+ const bs=$('bs'),setSprint=v=>{K.ShiftLeft=v?1:0;bs.classList.toggle('on',!!v)};
+ bs.addEventListener('pointerdown',e=>{e.preventDefault();setSprint(!K.ShiftLeft)});
+ addEventListener('blur',()=>setSprint(false));
+ const be=$('be');let last='';
+ mobUI=(show,sit)=>{const k=show+'|'+sit;if(k===last)return;last=k;be.style.display=show?'grid':'none';be.textContent=sit?'Turun':'Duduk'};}
 addEventListener('resize',()=>{R.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()});
 
 /* ---------- loop utama ---------- */
@@ -299,17 +461,24 @@ pos.y=H(pos.x,pos.z);camP.set(2,4,17);
 function tick(){
  requestAnimationFrame(tick);
  const dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime;
- swAmp+=((sitting?.42:.1)-swAmp)*Math.min(1,dt*.6);swingG.rotation.z=Math.sin(t*.94)*swAmp;swingG.updateMatrixWorld(true);seatM.getWorldPosition(seatW);orientSwing();
+ 
+ swAmp+=((sitting?.42:.1)-swAmp)*Math.min(1,dt*.6);
+ swingG.rotation.x = Math.sin(t*.94)*swAmp; 
+ swingG.updateMatrixWorld(true);
+ seatM.getWorldPosition(seatW);
+ 
  near=!sitting&&Math.hypot(pos.x-seatW.x,pos.z-seatW.z)<3.2&&Math.abs(pos.y-seatW.y)<3.5;
- tip.style.opacity=near||sitting?1:0;tip.textContent=sitting?'E / Space — turun':'E — duduk di ayunan';
+ tip.style.opacity=near||sitting?1:0;tip.textContent=sitting?(TOUCH?'Ketuk Turun / Lompat':'E / Space — turun'):(TOUCH?'Ketuk Duduk — naik ayunan':'E — duduk di ayunan');if(TOUCH)mobUI(near||sitting,sitting);
  let f=(K.KeyW||K.ArrowUp?1:0)-(K.KeyS||K.ArrowDown?1:0),r=(K.KeyD||K.ArrowRight?1:0)-(K.KeyA||K.ArrowLeft?1:0);
+ if(JX||JY){f=JY;r=JX}
  if(sitting){pose=0;pw.sit=pw.lie=0}
  if(pose&&(f||r||K.Space))pose=0;
  pw.sit+=((pose==1?1:0)-pw.sit)*Math.min(1,dt*5);pw.lie+=((pose==2?1:0)-pw.lie)*Math.min(1,dt*4);
  const lock=Math.max(pw.sit,pw.lie);
- const len=Math.hypot(f,r),sprint=K.Enter||K.NumpadEnter;let tx=0,tz=0;
- if(len){f/=len;r/=len;tx=-Math.sin(yaw)*f+Math.cos(yaw)*r;tz=-Math.cos(yaw)*f-Math.sin(yaw)*r}
- const sp=(sprint?14:6.5)*(1-lock),k=Math.min(1,dt*(grounded?10:3));
+ 
+ const len=Math.hypot(f,r),sprint=K.ShiftLeft||K.ShiftRight;let tx=0,tz=0,mag=1;
+ if(len){mag=Math.min(1,len);f/=len;r/=len;tx=-Math.sin(yaw)*f+Math.cos(yaw)*r;tz=-Math.cos(yaw)*f-Math.sin(yaw)*r}
+ const sp=(sprint?14:6.5)*(1-lock)*mag,k=Math.min(1,dt*(grounded?10:3));
  vel.x+=(tx*sp-vel.x)*k;vel.z+=(tz*sp-vel.z)*k;
  pos.x+=vel.x*dt;pos.z+=vel.z*dt;
  for(const[sx,sz,sr]of solids){const dx=pos.x-sx,dz=pos.z-sz,d=Math.hypot(dx,dz),m=sr+.5;if(d<m&&d>0){pos.x=sx+dx/d*m;pos.z=sz+dz/d*m}}
@@ -345,9 +514,18 @@ function tick(){
    body.position.y+=Math.sin(t*1.9)*.012*wl;}
   hero.rotation.x=-Math.PI/2*wl;
   hero.position.y+=-.70*ws+.33*wl;hero.position.x+=Math.sin(face)*wl;hero.position.z+=Math.cos(face)*wl;}
- if(sitting){legL.rotation.x=legR.rotation.x=-1.45;armL.rotation.x=armR.rotation.x=-2.3;armL.rotation.z=.15;armR.rotation.z=-.15;body.rotation.x=0;
-  face+=Math.atan2(Math.sin(Math.PI/2-face),Math.cos(Math.PI/2-face))*Math.min(1,dt*8);hero.rotation.y=face;
-  hero.position.set(seatW.x,seatW.y+.1-.78,seatW.z)}
+if(sitting){legL.rotation.x=legR.rotation.x=-1.45;armL.rotation.x=armR.rotation.x=-2.3;armL.rotation.z=.15;armR.rotation.z=-.15;body.rotation.x=0;
+  
+  /* TWEAK 5: ARAH HADAP KARAKTER SAAT DUDUK DI AYUNAN */
+  // Jika karakter menghadap ke belakang (menghadap batang pohon), ganti angka 0 di bawah ini menjadi Math.PI
+  const targetFace = 0; 
+  face+=Math.atan2(Math.sin(targetFace-face),Math.cos(targetFace-face))*Math.min(1,dt*8);
+  hero.rotation.y=face;
+  
+  /* TWEAK 4: TINGGI DUDUK KARAKTER (Tenggelam/Melayang) */
+  const SITTING_Y_OFFSET = -0.1;
+  hero.position.set(seatW.x, seatW.y + SITTING_Y_OFFSET, seatW.z);
+ }
 
  const tgt=new T.Vector3(pos.x,pos.y+1.6-.65*pw.sit-1.0*pw.lie,pos.z),cp=new T.Vector3(
   Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch)).multiplyScalar(dist+(sprint&&len?2:0)).add(tgt);
@@ -356,8 +534,10 @@ function tick(){
  fov+=((sprint&&len?72:60)-fov)*Math.min(1,dt*5);if(Math.abs(cam.fov-fov)>.05){cam.fov=fov;cam.updateProjectionMatrix()}
 
  sky.position.copy(pos);sunG.position.copy(pos);
- sun.position.copy(pos).addScaledVector(SD,70);sun.target.position.copy(pos);
- hShadow.visible=!sitting&&pw.lie<.5;hShadow.position.set(pos.x,pos.y+.14,pos.z);hShadow.scale.setScalar(1+pw.sit*.5);
+ const sgy=H(pos.x,pos.z),lf=1-sm(0,3.5,Math.max(0,pos.y-sgy));
+ sun.target.position.set(pos.x,sgy,pos.z);sun.position.copy(sun.target.position).addScaledVector(SD,70);
+ hShadow.visible=!sitting&&pw.lie<.5;hShadow.position.set(pos.x,Math.max(sgy,H(pos.x+.6,pos.z),H(pos.x-.6,pos.z),H(pos.x,pos.z+.6),H(pos.x,pos.z-.6))+.14,pos.z);
+ hShadow.scale.setScalar((1+pw.sit*.5)*(.5+.5*lf));hShadow.material.opacity=.6*(.3+.7*lf);
  clouds.rotation.y=t*.003;UT.value=t;UH.value.copy(pos);pano.position.set(pos.x,pos.y+61.5,pos.z);
  for(const c of clouds.children){const u=c.userData;c.position.y=u.y+Math.sin(t*.06+u.ph)*1.8;c.scale.set(u.w*(1+Math.sin(t*.05+u.ph)*.015),u.w/2*(1+Math.sin(t*.05+u.ph)*.015),1)}
  for(let i=0;i<petals.length/3;i++){const j=i*3;
